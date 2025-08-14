@@ -1,20 +1,6 @@
 import '@testing-library/jest-dom'
-import { logger } from '../utils/logger'
 
-// Mock logger for tests
-jest.mock('../utils/logger', () => ({
-  logger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-  },
-}))
-
-// Mock environment variables
-process.env.VITE_API_BASE_URL = 'http://localhost:8080/api'
-process.env.VITE_LOG_LEVEL = 'debug'
-process.env.NODE_ENV = 'test'
+// Test environment setup
 
 // Mock localStorage
 const localStorageMock = {
@@ -41,5 +27,3 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: jest.fn(),
   })),
 })
-
-logger.info('Test environment setup complete')

@@ -3,7 +3,7 @@ import { BrowserRouter } from 'react-router-dom'
 import Layout from '../Layout'
 
 // Test wrapper component
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+const TestWrapper = ({ children }: { children: JSX.Element }) => (
   <BrowserRouter>
     {children}
   </BrowserRouter>

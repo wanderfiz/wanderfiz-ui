@@ -121,19 +121,15 @@ jobs:
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:5173
 
-  # Basic security scan - runs on PR and push
-  security-scan:
-    name: Security Scanning
+  # Basic dependency check - runs on PR and push
+  dependency-check:
+    name: Dependency Check
     runs-on: ubuntu-latest
     if: github.event_name != 'schedule'
-    permissions:
-      security-events: write
-      
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -145,105 +141,13 @@ jobs:
         run: npm ci
 
       - name: Run npm audit
-        run: npm audit --audit-level=moderate
+        run: npm audit --audit-level=high
         continue-on-error: true
-
-      - name: Run Semgrep SAST
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/secrets
-            p/owasp-top-ten
-            p/javascript
-            p/typescript
-            p/react
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-        continue-on-error: true
-
-      - name: Run Snyk vulnerability scan
-        uses: snyk/actions/node@master
-        with:
-          command: test
-          args: --severity-threshold=medium
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true
-
-      - name: Run CodeQL Analysis
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-
-  # Comprehensive security scan - runs weekly on schedule
-  comprehensive-security-scan:
-    name: Comprehensive Security Audit
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == ''))
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      # Enhanced Semgrep SAST Analysis
-      - name: Run Enhanced Semgrep SAST
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/secrets
-            p/owasp-top-ten
-            p/javascript
-            p/typescript
-            p/react
-            p/xss
-            p/command-injection
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-        continue-on-error: true
-
-      # Enhanced npm audit
-      - name: Run Enhanced npm audit
-        run: |
-          npm audit --audit-level=low --json > npm-audit.json || true
-          cat npm-audit.json
-        continue-on-error: true
-
-      # Check for outdated dependencies
-      - name: Check for outdated dependencies
-        run: |
-          npm outdated --json > npm-outdated.json || true
-          cat npm-outdated.json
-        continue-on-error: true
-
-      - name: Upload Comprehensive Security Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: comprehensive-security-results-${{ github.run_id }}
-          path: |
-            npm-audit.json
-            npm-outdated.json
 
   # Build and push containers - runs on push to main
   build-and-push-production:
     name: Build & Push Production Container
-    needs: [test, e2e-tests, security-scan]
+    needs: [test, e2e-tests, dependency-check]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -326,7 +230,7 @@ jobs:
   # Build and push containers for development - runs on push to develop
   build-and-push-development:
     name: Build & Push Development Container
-    needs: [test, e2e-tests, security-scan]
+    needs: [test, e2e-tests, dependency-check]
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     environment: 

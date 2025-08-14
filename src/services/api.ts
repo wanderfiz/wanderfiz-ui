@@ -1,116 +1,65 @@
-import axios from 'axios'
-import { logger } from '../utils/logger'
-import type { ApiResponse } from '../types'
+// API service structure - UI only, no functional implementation
+// This file defines the interface structure for future API integration
 
-// API configuration from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
-const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '10000')
+export interface ApiCredentials {
+  email: string;
+  password: string;
+}
 
-// Create axios instance with configurable base URL
-export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: API_TIMEOUT,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
+export interface ApiUserData {
+  name: string;
+  email: string;
+  password: string;
+}
 
-// Request interceptor for authentication
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    logger.debug(`API Request: ${config.method?.toUpperCase()} ${config.url}`)
-    return config
-  },
-  (error) => {
-    logger.error('API Request Error:', error)
-    return Promise.reject(error)
-  }
-)
-
-// Response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => {
-    logger.debug(`API Response: ${response.status} ${response.config.url}`)
-    return response
-  },
-  (error) => {
-    const message = error.response?.data?.message || error.message
-    logger.error(`API Error: ${error.response?.status} ${message}`)
-    
-    // Handle authentication errors
-    if (error.response?.status === 401) {
-      localStorage.removeItem('accessToken')
-      // Redirect to login would happen here
-    }
-    
-    return Promise.reject(error)
-  }
-)
-
-// Generic API functions (structure only - no actual implementation)
+// API service placeholder - structure only
 export const api = {
-  // Auth endpoints
+  // Auth endpoints structure
   auth: {
-    login: async (credentials: { email: string; password: string }) => {
-      // Structure only - no actual implementation
-      logger.info('Login API call structure ready')
-      throw new Error('Not implemented - structure only')
+    login: async (_credentials: ApiCredentials): Promise<void> => {
+      throw new Error('API service not implemented - UI structure only')
     },
-    register: async (userData: { name: string; email: string; password: string }) => {
-      logger.info('Register API call structure ready')
-      throw new Error('Not implemented - structure only')
+    register: async (_userData: ApiUserData): Promise<void> => {
+      throw new Error('API service not implemented - UI structure only')
     },
-    logout: async () => {
-      logger.info('Logout API call structure ready')
-      throw new Error('Not implemented - structure only')
+    logout: async (): Promise<void> => {
+      throw new Error('API service not implemented - UI structure only')
     },
   },
   
-  // User endpoints
+  // User endpoints structure
   users: {
-    getProfile: async () => {
-      logger.info('Get profile API call structure ready')
-      throw new Error('Not implemented - structure only')
+    getProfile: async (): Promise<void> => {
+      throw new Error('API service not implemented - UI structure only')
     },
-    updateProfile: async (userData: any) => {
-      logger.info('Update profile API call structure ready')
-      throw new Error('Not implemented - structure only')
+    updateProfile: async (_userData: unknown): Promise<void> => {
+      throw new Error('API service not implemented - UI structure only')
     },
   },
   
-  // Trip endpoints
+  // Trip endpoints structure
   trips: {
-    getAll: async () => {
-      logger.info('Get trips API call structure ready')
-      throw new Error('Not implemented - structure only')
+    getAll: async (): Promise<void> => {
+      throw new Error('API service not implemented - UI structure only')
     },
-    getById: async (id: string) => {
-      logger.info('Get trip by ID API call structure ready')
-      throw new Error('Not implemented - structure only')
+    getById: async (_id: string): Promise<void> => {
+      throw new Error('API service not implemented - UI structure only')
     },
-    create: async (tripData: any) => {
-      logger.info('Create trip API call structure ready')
-      throw new Error('Not implemented - structure only')
+    create: async (_tripData: unknown): Promise<void> => {
+      throw new Error('API service not implemented - UI structure only')
     },
-    update: async (id: string, tripData: any) => {
-      logger.info('Update trip API call structure ready')
-      throw new Error('Not implemented - structure only')
+    update: async (_id: string, _tripData: unknown): Promise<void> => {
+      throw new Error('API service not implemented - UI structure only')
     },
-    delete: async (id: string) => {
-      logger.info('Delete trip API call structure ready')
-      throw new Error('Not implemented - structure only')
+    delete: async (_id: string): Promise<void> => {
+      throw new Error('API service not implemented - UI structure only')
     },
   },
   
-  // AI endpoints
+  // AI endpoints structure
   ai: {
-    getRecommendations: async (tripId: string) => {
-      logger.info('Get AI recommendations API call structure ready')
-      throw new Error('Not implemented - structure only')
+    getRecommendations: async (_tripId: string): Promise<void> => {
+      throw new Error('API service not implemented - UI structure only')
     },
   },
 }
