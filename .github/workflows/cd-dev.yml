@@ -1,0 +1,87 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    environment: 
+      name: development
+      url: https://dev-wanderfiz.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push container
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.prod
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev-${{ github.sha }}
+          build-args: |
+            VITE_API_BASE_URL=${{ secrets.DEV_API_BASE_URL }}
+            VITE_LOG_LEVEL=${{ secrets.DEV_LOG_LEVEL }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to Development Environment
+        run: |
+          # Deploy to development AWS environment
+          # This script uses environment variables from GitHub Secrets
+          ./scripts/deploy-to-aws.sh development
+        env:
+          ENVIRONMENT: development
+          CONTAINER_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          REDIS_HOST: ${{ secrets.DEV_REDIS_HOST }}
+          LOG_LEVEL: ${{ secrets.DEV_LOG_LEVEL }}
+
+      - name: Run health checks
+        run: |
+          # Wait for deployment and run health checks
+          ./scripts/health-check.sh ${{ secrets.DEV_API_BASE_URL }}
+
+      - name: Notify deployment status
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          message: |
+            Frontend deployment to development: ${{ job.status }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            URL: https://dev-wanderfiz.com
