@@ -1,9 +1,10 @@
+import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import Layout from '../Layout'
 
 // Test wrapper component
-const TestWrapper = ({ children }: { children: JSX.Element }) => (
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <BrowserRouter>
     {children}
   </BrowserRouter>
