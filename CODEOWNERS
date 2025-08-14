@@ -1,0 +1,8 @@
+# Wanderfiz Repository Code Owners
+* @sksathiyaraj @wanderfiz/core-team
+
+# Security sensitive files
+pom.xml @sksathiyaraj
+package.json @sksathiyaraj
+Dockerfile* @sksathiyaraj
+*.env.example @sksathiyaraj
