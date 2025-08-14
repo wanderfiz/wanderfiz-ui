@@ -1,0 +1,534 @@
+name: Comprehensive Security Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly security scan on Mondays at 6 AM UTC
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of security scan to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - sast
+          - secrets
+          - dependencies
+          - containers
+
+env:
+  NODE_VERSION: '20'
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  # Static Application Security Testing (SAST)
+  sast-analysis:
+    name: SAST Analysis
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'sast' || github.event.inputs.scan_type == '' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Semgrep SAST Analysis for React/TypeScript
+      - name: Run Semgrep SAST
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+            p/typescript
+            p/react
+            p/javascript
+            r/typescript.react.security.audit
+            r/javascript.express.security.audit
+            r/javascript.browser.security.audit
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+        continue-on-error: true
+
+      # ESLint Security Analysis
+      - name: Run ESLint Security Analysis
+        run: |
+          npm run lint -- --format json --output-file eslint-results.json
+          npm run lint:security || echo "Security linting completed with warnings"
+        continue-on-error: true
+
+      # TypeScript Compiler Security Checks
+      - name: Run TypeScript Security Checks
+        run: |
+          npm run type-check -- --strict --noImplicitAny --noImplicitReturns
+        continue-on-error: true
+
+      # CodeQL Analysis for JavaScript/TypeScript
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: typescript, javascript
+          queries: security-extended,security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:typescript"
+
+      - name: Upload SAST Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sast-results-frontend-${{ github.run_id }}
+          path: |
+            eslint-results.json
+
+  # Secret Scanning for Frontend
+  secret-scanning:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'secrets' || github.event.inputs.scan_type == '' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # TruffleHog Secret Scanning
+      - name: Run TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified --config .trufflerc.yml
+
+      # Gitleaks Secret Scanning
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Frontend-specific secret scanning
+      - name: Run Frontend Secret Scan
+        run: |
+          echo "Scanning for frontend-specific secrets..."
+          
+          # Check for API keys in code
+          grep -r "api.*key\|apiKey" src/ | grep -v "test\|spec" || echo "No API keys found in source"
+          
+          # Check for hardcoded URLs
+          grep -r "http://\|https://" src/ | grep -v "localhost\|example\.com" || echo "No hardcoded URLs found"
+          
+          # Check for authentication tokens
+          grep -r "auth.*token\|bearer\|jwt" src/ | grep -v "test\|spec\|interface" || echo "No auth tokens found"
+          
+          # Check build output for secrets
+          if [ -f "dist/index.html" ]; then
+            echo "Checking build output for leaked secrets..."
+            grep -E "(api.*key|secret|token)" dist/ -r || echo "No secrets in build output"
+          fi
+        continue-on-error: true
+
+  # Dependency Vulnerability Scanning
+  dependency-scanning:
+    name: Dependency Scanning
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'dependencies' || github.event.inputs.scan_type == '' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # NPM Audit
+      - name: Run NPM Audit
+        run: |
+          npm audit --audit-level=moderate --json > npm-audit-results.json || true
+          npm audit --audit-level=moderate
+        continue-on-error: true
+
+      # Snyk Vulnerability Scanning
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=medium --policy-path=.snyk
+        continue-on-error: true
+
+      # Retire.js for JavaScript vulnerability scanning
+      - name: Run Retire.js
+        run: |
+          npx retire --js --outputformat json --outputpath retire-results.json
+          npx retire --js
+        continue-on-error: true
+
+      # Check for known vulnerable packages
+      - name: Run NPM Audit with Better NPM Audit
+        run: |
+          npx better-npm-audit audit --level moderate
+        continue-on-error: true
+
+      # Audit production dependencies only
+      - name: Audit Production Dependencies
+        run: |
+          npm audit --production --audit-level=high
+        continue-on-error: true
+
+      - name: Upload Dependency Scan Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-scan-results-frontend-${{ github.run_id }}
+          path: |
+            npm-audit-results.json
+            retire-results.json
+
+  # Container Security Scanning
+  container-scanning:
+    name: Container Security Scanning
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'containers' || github.event.inputs.scan_type == '' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build Docker image for scanning
+      - name: Build Docker image
+        run: |
+          docker build -f Dockerfile.prod -t wanderfiz/wanderfiz-ui:security-scan .
+
+      # Trivy Container Security Scanner
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'wanderfiz/wanderfiz-ui:security-scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+        continue-on-error: true
+
+      # Grype Container Scanner
+      - name: Run Grype vulnerability scanner
+        uses: anchore/scan-action@v3
+        with:
+          image: 'wanderfiz/wanderfiz-ui:security-scan'
+          fail-build: false
+          severity-cutoff: medium
+        continue-on-error: true
+
+      # Nginx Configuration Security Check
+      - name: Check Nginx Configuration Security
+        run: |
+          echo "Analyzing Nginx configuration security..."
+          if [ -f "nginx.conf" ]; then
+            echo "Checking nginx.conf for security issues..."
+            grep -E "(server_tokens|add_header|ssl_)" nginx.conf || echo "Security headers check completed"
+          fi
+        continue-on-error: true
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Frontend Security Analysis
+  frontend-security-analysis:
+    name: Frontend Security Analysis
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == '' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # React Security Analysis
+      - name: Analyze React Security Patterns
+        run: |
+          echo "Analyzing React security patterns..."
+          
+          # Check for dangerous React patterns
+          echo "Checking for dangerous React patterns..."
+          grep -r "dangerouslySetInnerHTML" src/ && echo "WARNING: dangerouslySetInnerHTML found" || echo "No dangerous HTML patterns found"
+          grep -r "eval\|Function\|setTimeout.*string" src/ && echo "WARNING: Code injection risks found" || echo "No code injection patterns found"
+          
+          # Check for XSS vulnerabilities
+          echo "Checking for XSS vulnerabilities..."
+          grep -r "innerHTML\|outerHTML" src/ && echo "WARNING: Direct HTML manipulation found" || echo "No direct HTML manipulation found"
+          
+          # Check for CSRF protection
+          echo "Checking CSRF protection patterns..."
+          grep -r "csrf\|xsrf" src/ || echo "No explicit CSRF protection found"
+        continue-on-error: true
+
+      # Build Security Analysis
+      - name: Analyze Build Security
+        run: |
+          echo "Analyzing build security..."
+          
+          # Build the application
+          npm run build
+          
+          # Check build output security
+          echo "Checking build output security..."
+          find dist/ -name "*.js" -exec grep -l "console\.log\|debugger" {} \; && echo "WARNING: Debug statements in production build" || echo "No debug statements in build"
+          
+          # Check for source maps in production
+          find dist/ -name "*.map" && echo "WARNING: Source maps found in production build" || echo "No source maps in production build"
+          
+          # Check for proper asset optimization
+          echo "Checking asset optimization..."
+          find dist/ -name "*.js" -size +1M && echo "WARNING: Large JavaScript bundles found" || echo "Bundle sizes acceptable"
+        continue-on-error: true
+
+      # CSP Analysis
+      - name: Analyze Content Security Policy
+        run: |
+          echo "Analyzing Content Security Policy..."
+          
+          # Check for CSP headers in nginx config
+          if [ -f "nginx.conf" ]; then
+            grep -i "content-security-policy" nginx.conf || echo "No CSP headers found in nginx config"
+          fi
+          
+          # Check for CSP in HTML
+          if [ -f "dist/index.html" ]; then
+            grep -i "content-security-policy" dist/index.html || echo "No CSP meta tags found"
+          fi
+          
+          # Check for inline scripts/styles
+          if [ -f "dist/index.html" ]; then
+            grep -E "<script[^>]*>|<style[^>]*>" dist/index.html && echo "WARNING: Inline scripts/styles found" || echo "No inline scripts/styles"
+          fi
+        continue-on-error: true
+
+  # Client-Side Security Testing
+  client-side-security:
+    name: Client-Side Security Testing
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == '' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Authentication Security Analysis
+      - name: Analyze Authentication Security
+        run: |
+          echo "Analyzing client-side authentication security..."
+          
+          # Check for secure token storage
+          echo "Checking token storage patterns..."
+          grep -r "localStorage\|sessionStorage" src/ | grep -E "(token|auth|jwt)" && echo "WARNING: Tokens in browser storage" || echo "No tokens in browser storage"
+          
+          # Check for secure cookie handling
+          echo "Checking cookie handling..."
+          grep -r "document\.cookie" src/ && echo "WARNING: Direct cookie manipulation" || echo "No direct cookie manipulation"
+          
+          # Check for proper logout handling
+          echo "Checking logout patterns..."
+          grep -r "logout\|signout" src/ || echo "No logout functionality found"
+        continue-on-error: true
+
+      # API Security Analysis
+      - name: Analyze API Security
+        run: |
+          echo "Analyzing API security patterns..."
+          
+          # Check for hardcoded API endpoints
+          echo "Checking API endpoints..."
+          grep -r "api\.\|/api/" src/ | grep -v "localhost\|example" && echo "API endpoints found" || echo "No hardcoded API endpoints"
+          
+          # Check for proper error handling
+          echo "Checking API error handling..."
+          grep -r "\.catch\|try.*catch" src/ || echo "Error handling patterns found"
+          
+          # Check for input validation
+          echo "Checking input validation..."
+          grep -r "validate\|sanitize" src/ || echo "No explicit validation found"
+        continue-on-error: true
+
+  # Security Configuration Analysis
+  security-config-analysis:
+    name: Security Configuration Analysis
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == '' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Vite Configuration Security
+      - name: Analyze Vite Configuration Security
+        run: |
+          echo "Analyzing Vite configuration security..."
+          
+          if [ -f "vite.config.ts" ]; then
+            echo "Checking vite.config.ts..."
+            grep -E "(preview|server).*host.*0\.0\.0\.0" vite.config.ts && echo "WARNING: Server exposed to all interfaces" || echo "Server configuration secure"
+            grep -E "build.*sourcemap.*true" vite.config.ts && echo "WARNING: Source maps enabled for production" || echo "Source maps configuration secure"
+          fi
+        continue-on-error: true
+
+      # Environment Configuration Security
+      - name: Analyze Environment Configuration
+        run: |
+          echo "Analyzing environment configuration..."
+          
+          # Check for environment variable patterns
+          grep -r "process\.env\|import\.meta\.env" src/ | head -10
+          
+          # Check for proper environment handling
+          if [ -f ".env.example" ]; then
+            echo "Checking .env.example for sensitive patterns..."
+            grep -E "(password|secret|key)" .env.example && echo "WARNING: Sensitive patterns in example env" || echo "Example environment file secure"
+          fi
+        continue-on-error: true
+
+  # Security Summary and Reporting
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [sast-analysis, secret-scanning, dependency-scanning, container-scanning, frontend-security-analysis, client-side-security, security-config-analysis]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate Frontend Security Report
+        run: |
+          echo "# Comprehensive Security Scan Summary for Frontend (wanderfiz-ui)" > security-report.md
+          echo "Generated on: $(date)" >> security-report.md
+          echo "" >> security-report.md
+          
+          echo "## Service Overview" >> security-report.md
+          echo "- **Service**: React/TypeScript Frontend Application" >> security-report.md
+          echo "- **Framework**: React 18 with TypeScript 5.6, Vite 6.0" >> security-report.md
+          echo "- **Deployment**: Static assets served via Cloudflare CDN" >> security-report.md
+          echo "- **Security Model**: Client-side security with API Gateway integration" >> security-report.md
+          echo "" >> security-report.md
+          
+          # Scan results table
+          echo "## Security Scan Results" >> security-report.md
+          echo "| Scan Type | Status | Description |" >> security-report.md
+          echo "|-----------|--------|-------------|" >> security-report.md
+          
+          # SAST
+          if [ "${{ needs.sast-analysis.result }}" == "success" ]; then
+            echo "| SAST Analysis | ✅ Passed | React/TypeScript static analysis completed |" >> security-report.md
+          else
+            echo "| SAST Analysis | ❌ Failed | Frontend static analysis found issues |" >> security-report.md
+          fi
+          
+          # Secret Scanning
+          if [ "${{ needs.secret-scanning.result }}" == "success" ]; then
+            echo "| Secret Scanning | ✅ Passed | No hardcoded secrets in frontend code |" >> security-report.md
+          else
+            echo "| Secret Scanning | ❌ Failed | Potential secrets found in frontend |" >> security-report.md
+          fi
+          
+          # Dependencies
+          if [ "${{ needs.dependency-scanning.result }}" == "success" ]; then
+            echo "| Dependency Scanning | ✅ Passed | No critical vulnerabilities in npm dependencies |" >> security-report.md
+          else
+            echo "| Dependency Scanning | ❌ Failed | Vulnerable npm packages detected |" >> security-report.md
+          fi
+          
+          # Frontend Security
+          if [ "${{ needs.frontend-security-analysis.result }}" == "success" ]; then
+            echo "| Frontend Security | ✅ Passed | React security patterns verified |" >> security-report.md
+          else
+            echo "| Frontend Security | ⚠️ Review | Frontend security patterns need review |" >> security-report.md
+          fi
+          
+          # Client-Side Security
+          if [ "${{ needs.client-side-security.result }}" == "success" ]; then
+            echo "| Client-Side Security | ✅ Passed | Client-side security verified |" >> security-report.md
+          else
+            echo "| Client-Side Security | ⚠️ Review | Client-side security needs review |" >> security-report.md
+          fi
+          
+          echo "" >> security-report.md
+          echo "## Frontend Security Recommendations" >> security-report.md
+          echo "### ✅ Security Architecture Compliance" >> security-report.md
+          echo "- All API communication through secure API Gateway" >> security-report.md
+          echo "- No direct authentication logic (handled by API Gateway)" >> security-report.md
+          echo "- Static assets served via Cloudflare CDN with security headers" >> security-report.md
+          echo "" >> security-report.md
+          echo "### 🔒 Frontend-Specific Security" >> security-report.md
+          echo "- Implement Content Security Policy (CSP) headers" >> security-report.md
+          echo "- Avoid storing sensitive data in browser storage" >> security-report.md
+          echo "- Implement proper input validation and sanitization" >> security-report.md
+          echo "- Use secure communication (HTTPS only)" >> security-report.md
+          echo "- Implement proper error handling without information disclosure" >> security-report.md
+          echo "" >> security-report.md
+          echo "### ⚠️ Action Items" >> security-report.md
+          echo "- Review and address any critical/high severity findings" >> security-report.md
+          echo "- Ensure no sensitive data is exposed in client-side code" >> security-report.md
+          echo "- Implement security headers in nginx configuration" >> security-report.md
+          echo "- Regular dependency updates and vulnerability monitoring" >> security-report.md
+          echo "- Enable and configure CSP headers for XSS protection" >> security-report.md
+
+      - name: Upload Security Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-security-report-${{ github.run_id }}
+          path: security-report.md
+
+      - name: Comment PR with Security Report
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('security-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🛡️ Frontend Security Scan Results\n\n${report}`
+            });

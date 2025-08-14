@@ -1,0 +1,129 @@
+# TruffleHog Configuration for Frontend (wanderfiz-ui)
+# Specialized configuration for React/TypeScript frontend security
+
+verify: true
+only-verified: false
+json: true
+concurrency: 8
+
+# Frontend specific detectors
+detectors:
+  - name: "API Keys in Frontend"
+    keywords:
+      - "api"
+      - "key"
+      - "token"
+      - "secret"
+    regex: '(api|API)[_-]?(key|KEY|token|TOKEN)["\s]*[:=]["\s]*["\']([a-zA-Z0-9_-]{20,})["\']'
+    verify: false
+
+  - name: "Third Party Service Keys"
+    keywords:
+      - "google"
+      - "firebase"
+      - "stripe"
+      - "maps"
+    regex: '(google|firebase|stripe|maps)[_-]?(api|key)["\s]*[:=]["\s]*["\']([a-zA-Z0-9_-]{20,})["\']'
+    verify: false
+
+  - name: "Authentication Tokens"
+    keywords:
+      - "auth"
+      - "jwt"
+      - "bearer"
+      - "token"
+    regex: '(auth|jwt|bearer)[_-]?token["\s]*[:=]["\s]*["\']([a-zA-Z0-9+/=]{20,})["\']'
+    verify: false
+
+  - name: "Environment Variables in Code"
+    keywords:
+      - "process"
+      - "env"
+      - "import.meta.env"
+    regex: '(process\.env|import\.meta\.env)\.[A-Z_]+'
+    verify: false
+
+  - name: "Hardcoded URLs"
+    keywords:
+      - "http"
+      - "https"
+      - "api"
+    regex: 'https?://[a-zA-Z0-9.-]+/[a-zA-Z0-9/._-]*'
+    verify: false
+
+  - name: "Private Keys in Frontend"
+    keywords:
+      - "private"
+      - "key"
+      - "rsa"
+      - "ecdsa"
+    regex: '-----BEGIN [A-Z ]+ PRIVATE KEY-----'
+    verify: true
+
+  - name: "Database Connection Strings"
+    keywords:
+      - "mongodb"
+      - "postgres"
+      - "mysql"
+      - "connection"
+    regex: '(mongodb|postgres|mysql)://[a-zA-Z0-9:@.-]+/[a-zA-Z0-9_-]+'
+    verify: false
+
+# Frontend exclusions
+excluded-paths:
+  - "node_modules/"
+  - "dist/"
+  - "build/"
+  - ".git/"
+  - "*.log"
+  - "*.map"
+  - "coverage/"
+  - ".next/"
+  - ".vite/"
+  - "cypress/"
+  - "playwright/"
+
+# Frontend-specific entropy exclusions
+excluded-entropy:
+  - "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  - "abcdefghijklmnopqrstuvwxyz"
+  - "0123456789"
+  - "userId"
+  - "sessionId"
+  - "requestId"
+
+# Frontend specific rules
+custom-rules:
+  # Ignore test API keys
+  - regex: 'test[_-]?(api|key|token)'
+    reason: "Test API credentials, not production secrets"
+  
+  # Ignore example/demo values
+  - regex: '(example|demo|placeholder)[_-]?(api|key|url)'
+    reason: "Example configuration values"
+    
+  # Ignore localhost URLs
+  - regex: 'https?://localhost:[0-9]+/?'
+    reason: "Local development URLs"
+    
+  # Ignore common development URLs
+  - regex: 'https?://(127\.0\.0\.1|0\.0\.0\.0):[0-9]+/?'
+    reason: "Local development server URLs"
+    
+  # Ignore public API endpoints
+  - regex: 'https://api\.(github|google|stripe)\.com'
+    reason: "Public API endpoints, not secrets"
+    
+  # Ignore build-time environment variable references
+  - regex: '(process\.env|import\.meta\.env)\.(NODE_ENV|PUBLIC_|VITE_)'
+    reason: "Build-time environment variables, safe to expose"
+    
+  # Ignore TypeScript type definitions
+  - regex: '(interface|type)\s+\w+.*{\s*[a-zA-Z0-9_:;\s]*}'
+    reason: "TypeScript type definitions"
+    file_patterns: ["*.ts", "*.tsx"]
+    
+  # Ignore CSS class names that might look like secrets
+  - regex: '(className|class)[=\s]*["\'][a-zA-Z0-9_-]+["\']'
+    reason: "CSS class names"
+    file_patterns: ["*.tsx", "*.jsx"]
