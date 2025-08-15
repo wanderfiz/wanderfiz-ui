@@ -1,14 +1,32 @@
 import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Logo from '../ui/Logo'
 import GlassButton from '../ui/GlassButton'
+import LoadingSpinner from '../ui/LoadingSpinner'
+import { useAuth } from '../../hooks/useAuth'
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, isAuthenticated, signOut, isLoading } = useAuth()
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
+  }
+
+  const handleSignOut = async () => {
+    try {
+      setIsLoggingOut(true)
+      await signOut()
+      navigate('/', { replace: true })
+    } catch (error) {
+      console.error('Sign out failed:', error)
+    } finally {
+      setIsLoggingOut(false)
+      setIsMenuOpen(false)
+    }
   }
 
   const isActive = (path: string) => location.pathname === path
@@ -58,19 +76,53 @@ const Header: React.FC = () => {
             </div>
           </div>
 
-          {/* Desktop Auth Buttons */}
+          {/* Desktop Auth Section */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link
-              to="/login"
-              className="text-gray-700 hover:text-[#FF561D] px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              Login
-            </Link>
-            <Link to="/signup">
-              <GlassButton variant="primary" size="small">
-                Sign Up
-              </GlassButton>
-            </Link>
+            {isLoading ? (
+              <LoadingSpinner size="small" />
+            ) : isAuthenticated && user ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="text-gray-700 hover:text-[#FF561D] px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Dashboard
+                </Link>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">
+                    {user.name}
+                  </span>
+                  <button
+                    onClick={handleSignOut}
+                    disabled={isLoggingOut}
+                    className="text-gray-700 hover:text-[#FF561D] px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 disabled:opacity-50"
+                  >
+                    {isLoggingOut ? (
+                      <span className="flex items-center">
+                        <LoadingSpinner size="small" />
+                        <span className="ml-1">Signing out...</span>
+                      </span>
+                    ) : (
+                      'Sign Out'
+                    )}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-gray-700 hover:text-[#FF561D] px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Login
+                </Link>
+                <Link to="/signup">
+                  <GlassButton variant="primary" size="small">
+                    Sign Up
+                  </GlassButton>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -139,20 +191,53 @@ const Header: React.FC = () => {
                 Pricing
               </Link>
               <div className="border-t border-white/20 pt-4">
-                <Link
-                  to="/login"
-                  className="text-gray-700 hover:text-[#FF561D] hover:bg-white/20 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Login
-                </Link>
-                <div className="px-3 py-2">
-                  <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
-                    <GlassButton variant="primary" size="small" className="w-full">
-                      Sign Up
-                    </GlassButton>
-                  </Link>
-                </div>
+                {isAuthenticated && user ? (
+                  <>
+                    <Link
+                      to="/dashboard"
+                      className="text-gray-700 hover:text-[#FF561D] hover:bg-white/20 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <div className="px-3 py-2">
+                      <div className="text-sm text-gray-600 mb-2">
+                        {user.name}
+                      </div>
+                      <button
+                        onClick={handleSignOut}
+                        disabled={isLoggingOut}
+                        className="w-full text-left text-gray-700 hover:text-[#FF561D] hover:bg-white/20 px-0 py-2 rounded-md text-base font-medium transition-colors duration-200 disabled:opacity-50"
+                      >
+                        {isLoggingOut ? (
+                          <span className="flex items-center">
+                            <LoadingSpinner size="small" />
+                            <span className="ml-2">Signing out...</span>
+                          </span>
+                        ) : (
+                          'Sign Out'
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="text-gray-700 hover:text-[#FF561D] hover:bg-white/20 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <div className="px-3 py-2">
+                      <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
+                        <GlassButton variant="primary" size="small" className="w-full">
+                          Sign Up
+                        </GlassButton>
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

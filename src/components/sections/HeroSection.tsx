@@ -1,145 +1,149 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
-import Button from '../ui/Button'
-import { useScrollAnimation } from '../../hooks/useScrollAnimation'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import GlassButton from '../ui/GlassButton';
+import GlassCard from '../ui/GlassCard';
 
 const HeroSection: React.FC = () => {
-  const navigate = useNavigate()
-  const { ref: heroRef, isVisible } = useScrollAnimation({ threshold: 0.3 })
-
   return (
-    <section ref={heroRef} className="relative min-h-screen bg-hero-gradient">
-      {/* Hero Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-screen">
-          
-          {/* Left Content */}
-          <div className="space-y-8">
-            <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 leading-tight">
-                Plan your perfect trip with
-                <span className="text-primary-500"> AI assistance</span>
-              </h1>
-            </div>
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-hero">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-[#FF561D]/20 to-[#0ea5e9]/20 rounded-full blur-xl animate-float"></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-[#0ea5e9]/20 to-[#a855f7]/20 rounded-full blur-lg animate-float-delay-1"></div>
+        <div className="absolute bottom-32 left-20 w-40 h-40 bg-gradient-to-br from-[#a855f7]/20 to-[#FF561D]/20 rounded-full blur-2xl animate-float-delay-2"></div>
+        <div className="absolute bottom-20 right-10 w-28 h-28 bg-gradient-to-br from-[#84cc16]/20 to-[#fbbf24]/20 rounded-full blur-lg animate-float-slow"></div>
+      </div>
 
-            <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              <p className="text-xl text-neutral-600 leading-relaxed max-w-lg">
-                From inspiration to itinerary in minutes. Discover destinations, 
-                plan activities, and create unforgettable memories with intelligent travel planning.
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left Column - Content */}
+          <div className="text-center lg:text-left space-y-8">
+            <div className="space-y-6">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+                Transform Every{' '}
+                <span className="bg-gradient-to-r from-[#FF561D] to-[#0ea5e9] bg-clip-text text-transparent">
+                  Journey
+                </span>{' '}
+                from Dream to{' '}
+                <span className="bg-gradient-to-r from-[#0ea5e9] to-[#a855f7] bg-clip-text text-transparent">
+                  Memory
+                </span>
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-gray-600 leading-relaxed max-w-2xl">
+                WanderFiz is your intelligent travel companion that stays with you throughout your entire journey - from initial inspiration to cherished memories
               </p>
             </div>
 
-            {/* Search Box */}
-            <div className={`transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              <div className="bg-white rounded-2xl shadow-xl p-6 border border-neutral-100">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-neutral-700 mb-2 block">Where to?</label>
-                      <input 
-                        type="text" 
-                        placeholder="Search destinations" 
-                        className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-neutral-700 mb-2 block">When?</label>
-                      <input 
-                        type="date" 
-                        className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
-                      />
-                    </div>
-                  </div>
-                  <Button 
-                    className="w-full bg-primary-500 hover:bg-primary-600 text-white py-3 text-lg font-medium"
-                    onClick={() => navigate('/signup')}
-                  >
-                    Start planning →
-                  </Button>
-                </div>
-              </div>
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <Link to="/signup">
+                <GlassButton variant="primary" size="large" className="w-full sm:w-auto">
+                  Start Your Journey - It's Free
+                </GlassButton>
+              </Link>
+              <Link to="/how-it-works">
+                <GlassButton variant="secondary" size="large" className="w-full sm:w-auto">
+                  See How It Works
+                </GlassButton>
+              </Link>
             </div>
 
             {/* Trust Indicators */}
-            <div className={`transition-all duration-1000 delay-600 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              <div className="flex items-center space-x-8 text-sm text-neutral-500">
-                <div className="flex items-center space-x-2">
-                  <div className="flex -space-x-2">
-                    <div className="w-8 h-8 bg-primary-500 rounded-full border-2 border-white"></div>
-                    <div className="w-8 h-8 bg-secondary-500 rounded-full border-2 border-white"></div>
-                    <div className="w-8 h-8 bg-accent-sage rounded-full border-2 border-white"></div>
-                  </div>
-                  <span>50K+ travelers</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span className="text-amber-400">★★★★★</span>
-                  <span>4.9 rating</span>
-                </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6 text-sm text-gray-500">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span>Free forever plan</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span>No credit card required</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span>Works offline</span>
               </div>
             </div>
           </div>
 
-          {/* Right Content - Hero Image */}
-          <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <div className="relative">
-              {/* Main Hero Image Placeholder */}
-              <div className="bg-gradient-to-br from-primary-100 to-secondary-100 rounded-3xl overflow-hidden aspect-[4/3] shadow-2xl">
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-50 to-secondary-50">
-                  <div className="text-center space-y-4 p-8">
-                    <div className="text-6xl">🗺️</div>
-                    <div className="text-neutral-600 font-medium">Beautiful destination imagery</div>
-                    <div className="text-sm text-neutral-500">Inspiring travel photos would go here</div>
+          {/* Right Column - Visual */}
+          <div className="relative">
+            <GlassCard className="p-8 max-w-md mx-auto">
+              <div className="space-y-6">
+                {/* Mock App Interface */}
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+                  <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                  <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                  <div className="flex-1 text-center">
+                    <span className="text-sm font-medium text-gray-600">WanderFiz</span>
+                  </div>
+                </div>
+
+                {/* Trip Planning Preview */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-white/40 rounded-lg">
+                    <div className="w-8 h-8 bg-gradient-to-r from-[#FF561D] to-[#0ea5e9] rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm">🗺️</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-800">Paris Adventure</div>
+                      <div className="text-xs text-gray-600">3 days • AI Generated</div>
+                    </div>
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 bg-white/40 rounded-lg">
+                    <div className="w-8 h-8 bg-gradient-to-r from-[#0ea5e9] to-[#a855f7] rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm">📱</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-800">Live Navigation</div>
+                      <div className="text-xs text-gray-600">Currently active</div>
+                    </div>
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 bg-white/40 rounded-lg">
+                    <div className="w-8 h-8 bg-gradient-to-r from-[#a855f7] to-[#FF561D] rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm">📸</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-800">Memory Capture</div>
+                      <div className="text-xs text-gray-600">24 photos saved</div>
+                    </div>
+                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/20">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-gray-800">12</div>
+                    <div className="text-xs text-gray-600">Trips</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-gray-800">847</div>
+                    <div className="text-xs text-gray-600">Photos</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-gray-800">23</div>
+                    <div className="text-xs text-gray-600">Countries</div>
                   </div>
                 </div>
               </div>
-
-              {/* Floating Stats Cards */}
-              <div className="absolute -top-4 -left-4 bg-white rounded-xl shadow-lg p-4 border border-neutral-100">
-                <div className="text-sm text-neutral-600">Popular destination</div>
-                <div className="font-bold text-neutral-900">Paris, France</div>
-                <div className="text-xs text-primary-500">✈️ 2h 15m</div>
-              </div>
-
-              <div className="absolute -bottom-4 -right-4 bg-white rounded-xl shadow-lg p-4 border border-neutral-100">
-                <div className="text-sm text-neutral-600">Saved on average</div>
-                <div className="font-bold text-accent-sage">$248</div>
-                <div className="text-xs text-neutral-500">per trip</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Feature Benefits Strip */}
-      <div className="border-t border-neutral-100 bg-neutral-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">⚡</span>
-              </div>
-              <h3 className="font-semibold text-neutral-900 mb-2">5-minute planning</h3>
-              <p className="text-neutral-600 text-sm">AI creates your perfect itinerary in minutes</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-secondary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🌍</span>
-              </div>
-              <h3 className="font-semibold text-neutral-900 mb-2">Global coverage</h3>
-              <p className="text-neutral-600 text-sm">195+ countries with local insights</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-accent-sage/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">💰</span>
-              </div>
-              <h3 className="font-semibold text-neutral-900 mb-2">Save money</h3>
-              <p className="text-neutral-600 text-sm">Find the best deals and hidden gems</p>
-            </div>
+            </GlassCard>
           </div>
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default HeroSection
+export default HeroSection;

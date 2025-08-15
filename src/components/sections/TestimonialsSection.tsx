@@ -1,170 +1,235 @@
-import React, { useState, useEffect } from 'react'
-import { useScrollAnimation } from '../../hooks/useScrollAnimation'
-import { TESTIMONIALS } from '../../utils/constants'
+import React, { useState, useEffect } from 'react';
+import GlassCard from '../ui/GlassCard';
+
+interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  content: string;
+  rating: number;
+  avatar: string;
+  location: string;
+}
+
+const testimonials: Testimonial[] = [
+  {
+    id: '1',
+    name: 'Sarah Chen',
+    role: 'Digital Nomad',
+    content: 'WanderFiz transformed how I plan my trips. The AI suggestions are spot-on, and the offline mode is a lifesaver when exploring remote destinations!',
+    rating: 5,
+    avatar: 'SC',
+    location: 'Bali, Indonesia'
+  },
+  {
+    id: '2',
+    name: 'Mark Rodriguez',
+    role: 'Adventure Traveler',
+    content: 'Finally, an app that handles group expenses without the drama. Our Bali trip with 8 friends was perfectly organized, and everyone knew exactly what they owed.',
+    rating: 5,
+    avatar: 'MR',
+    location: 'Barcelona, Spain'
+  },
+  {
+    id: '3',
+    name: 'Emma Thompson',
+    role: 'Family Traveler',
+    content: 'The safety features give me peace of mind when traveling with kids. The photo memories feature is absolutely magical - it creates beautiful stories from our trips!',
+    rating: 5,
+    avatar: 'ET',
+    location: 'London, UK'
+  },
+  {
+    id: '4',
+    name: 'James Park',
+    role: 'Business Traveler',
+    content: 'I travel for work constantly, and WanderFiz keeps me organized. The real-time assistant has saved me countless times with flight changes and local recommendations.',
+    rating: 5,
+    avatar: 'JP',
+    location: 'Seoul, South Korea'
+  },
+  {
+    id: '5',
+    name: 'Maria Silva',
+    role: 'Solo Explorer',
+    content: 'As a solo female traveler, the safety features are incredible. The emergency SOS and embassy contacts give me confidence to explore anywhere in the world.',
+    rating: 5,
+    avatar: 'MS',
+    location: 'São Paulo, Brazil'
+  },
+  {
+    id: '6',
+    name: 'Alex Kumar',
+    role: 'Eco Traveler',
+    content: 'Love the sustainability features! Tracking my carbon footprint and finding eco-friendly options makes me feel good about my travel choices.',
+    rating: 5,
+    avatar: 'AK',
+    location: 'Mumbai, India'
+  }
+];
 
 const TestimonialsSection: React.FC = () => {
-  const [currentTestimonial, setCurrentTestimonial] = useState(0)
-  const { ref, isVisible } = useScrollAnimation({ threshold: 0.3 })
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Auto-rotate testimonials
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % TESTIMONIALS.length)
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <span key={i} className={`text-lg ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`}>
-        ★
-      </span>
-    ))
-  }
+    if (!isPaused) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % testimonials.length);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [isPaused]);
 
   return (
-    <section ref={ref} className="py-20 bg-gradient-to-br from-travel-sky/20 via-white to-travel-sand/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-20 bg-gradient-to-b from-gray-50/50 to-white">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Loved by Adventurers
-            <span className="bg-gradient-to-r from-travel-sunset to-travel-ocean bg-clip-text text-transparent">
-              {' '}Around the Globe 🌍
-            </span>
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+            Loved by{' '}
+            <span className="bg-gradient-to-r from-[#FF561D] to-[#0ea5e9] bg-clip-text text-transparent">
+              Travelers
+            </span>{' '}
+            Worldwide
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Real stories from real travelers who've discovered the joy of stress-free, perfectly planned adventures.
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Join thousands of happy travelers who've transformed their journeys with WanderFiz
           </p>
         </div>
 
-        {/* Featured Testimonial */}
-        <div className={`mb-16 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="max-w-4xl mx-auto text-center bg-white/70 backdrop-blur-md rounded-3xl p-12 border border-warm-200/50 shadow-xl">
-            <div className="mb-6">
-              {renderStars(TESTIMONIALS[currentTestimonial].rating)}
-            </div>
-            
-            <blockquote className="text-xl md:text-2xl text-gray-700 font-medium mb-8 leading-relaxed italic">
-              "{TESTIMONIALS[currentTestimonial].content}"
-            </blockquote>
-            
-            <div className="flex items-center justify-center space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-travel-sunset to-travel-ocean rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                {TESTIMONIALS[currentTestimonial].name.split(' ').map(n => n[0]).join('')}
-              </div>
-              <div className="text-left">
-                <div className="font-bold text-gray-900 text-lg">
-                  {TESTIMONIALS[currentTestimonial].name}
+        {/* Desktop View - Grid */}
+        <div className="hidden lg:grid lg:grid-cols-3 gap-8 mb-12">
+          {testimonials.slice(0, 3).map((testimonial) => (
+            <TestimonialCard key={testimonial.id} testimonial={testimonial} />
+          ))}
+        </div>
+
+        {/* Tablet View - 2 Column Grid */}
+        <div className="hidden md:grid lg:hidden md:grid-cols-2 gap-8 mb-12">
+          {testimonials.slice(0, 2).map((testimonial) => (
+            <TestimonialCard key={testimonial.id} testimonial={testimonial} />
+          ))}
+        </div>
+
+        {/* Mobile View - Carousel */}
+        <div 
+          className="md:hidden relative mb-12"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          <div className="overflow-hidden">
+            <div 
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            >
+              {testimonials.map((testimonial) => (
+                <div key={testimonial.id} className="w-full flex-shrink-0 px-4">
+                  <TestimonialCard testimonial={testimonial} />
                 </div>
-                <div className="text-travel-ocean font-medium">
-                  {TESTIMONIALS[currentTestimonial].role}
-                </div>
-                <div className="text-gray-600 text-sm flex items-center">
-                  📍 {TESTIMONIALS[currentTestimonial].location}
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Testimonial Indicators */}
-          <div className="flex justify-center space-x-3 mt-8">
-            {TESTIMONIALS.map((_, index) => (
+          {/* Carousel Indicators */}
+          <div className="flex justify-center mt-6 space-x-2">
+            {testimonials.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentTestimonial(index)}
-                className={`w-4 h-4 rounded-full transition-all duration-300 ${
-                  index === currentTestimonial 
-                    ? 'bg-travel-sunset scale-125 shadow-lg' 
-                    : 'bg-gray-300 hover:bg-travel-ocean/50'
+                onClick={() => setCurrentIndex(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  index === currentIndex
+                    ? 'bg-gradient-to-r from-[#FF561D] to-[#0ea5e9] w-8'
+                    : 'bg-gray-300 hover:bg-gray-400'
                 }`}
-                aria-label={`View testimonial ${index + 1}`}
               />
             ))}
           </div>
         </div>
 
-        {/* Travel Stories Grid */}
-        <div className={`transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h3 className="text-3xl font-bold text-gray-900 text-center mb-4">
-            Travel Stories That Inspire ✨
-          </h3>
-          <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
-            Discover how WanderFiz has transformed adventures for travelers just like you
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {TESTIMONIALS.slice(0, 6).map((testimonial, index) => (
-              <div 
-                key={testimonial.id} 
-                className={`bg-white/60 backdrop-blur-sm rounded-2xl p-6 group hover:scale-105 hover:shadow-xl transition-all duration-300 border border-warm-200/50 ${
-                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                }`}
-                style={{ transitionDelay: `${index * 100}ms` }}
-              >
-                <div className="mb-4 flex justify-between items-start">
-                  <div>{renderStars(testimonial.rating)}</div>
-                  <div className="text-2xl">🌟</div>
+        {/* Stats Section */}
+        <div className="text-center">
+          <GlassCard className="inline-block p-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div className="space-y-2">
+                <div className="text-3xl font-bold bg-gradient-to-r from-[#FF561D] to-[#0ea5e9] bg-clip-text text-transparent">
+                  50K+
                 </div>
-                
-                <blockquote className="text-gray-700 mb-6 leading-relaxed italic">
-                  "{testimonial.content}"
-                </blockquote>
-                
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-travel-sunset to-travel-forest rounded-full flex items-center justify-center text-white font-bold shadow-md">
-                    {testimonial.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <div>
-                    <div className="font-bold text-gray-900">
-                      {testimonial.name}
-                    </div>
-                    <div className="text-travel-ocean font-medium text-sm">
-                      {testimonial.role}
-                    </div>
-                    <div className="text-gray-600 text-sm flex items-center">
-                      📍 {testimonial.location}
-                    </div>
-                  </div>
-                </div>
+                <div className="text-sm text-gray-600 font-medium">Happy Travelers</div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Travel Industry Recognition */}
-        <div className={`mt-20 pt-12 border-t border-warm-200/50 transition-all duration-1000 delay-800 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="text-center mb-12">
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
-              Recognized by Travel Industry Leaders 🏆
-            </h3>
-            <p className="text-gray-600">
-              Trusted by travel professionals and featured in major publications
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <div className="bg-white/50 backdrop-blur-sm border border-warm-200/50 rounded-xl px-8 py-6 text-center hover:scale-105 transition-transform duration-300">
-              <div className="text-3xl mb-2">🏅</div>
-              <div className="text-lg font-bold text-travel-sunset mb-1">Travel + Leisure</div>
-              <div className="text-sm text-gray-600">Best Travel Planning App 2024</div>
+              <div className="space-y-2">
+                <div className="text-3xl font-bold bg-gradient-to-r from-[#0ea5e9] to-[#a855f7] bg-clip-text text-transparent">
+                  200K+
+                </div>
+                <div className="text-sm text-gray-600 font-medium">Trips Planned</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-3xl font-bold bg-gradient-to-r from-[#a855f7] to-[#84cc16] bg-clip-text text-transparent">
+                  150+
+                </div>
+                <div className="text-sm text-gray-600 font-medium">Countries</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-3xl font-bold bg-gradient-to-r from-[#84cc16] to-[#fbbf24] bg-clip-text text-transparent">
+                  4.9★
+                </div>
+                <div className="text-sm text-gray-600 font-medium">App Rating</div>
+              </div>
             </div>
-            <div className="bg-white/50 backdrop-blur-sm border border-warm-200/50 rounded-xl px-8 py-6 text-center hover:scale-105 transition-transform duration-300">
-              <div className="text-3xl mb-2">⭐</div>
-              <div className="text-lg font-bold text-travel-ocean mb-1">Conde Nast Traveler</div>
-              <div className="text-sm text-gray-600">Editor's Choice Award</div>
-            </div>
-            <div className="bg-white/50 backdrop-blur-sm border border-warm-200/50 rounded-xl px-8 py-6 text-center hover:scale-105 transition-transform duration-300">
-              <div className="text-3xl mb-2">🚀</div>
-              <div className="text-lg font-bold text-travel-forest mb-1">TechCrunch</div>
-              <div className="text-sm text-gray-600">Travel Innovation of the Year</div>
-            </div>
-          </div>
+          </GlassCard>
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default TestimonialsSection
+const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }) => {
+  return (
+    <GlassCard className="p-6 h-full">
+      <div className="flex flex-col h-full">
+        {/* Quote Icon */}
+        <div className="mb-4">
+          <svg className="w-8 h-8 text-gray-400 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M3 10c0-1.105.895-2 2-2h10c1.105 0 2 .895 2 2v6c0 1.105-.895 2-2 2H5c-1.105 0-2-.895-2-2v-6zM7.5 6a.5.5 0 01.5.5V8a.5.5 0 01-1 0V6.5a.5.5 0 01.5-.5zM12.5 6a.5.5 0 01.5.5V8a.5.5 0 01-1 0V6.5a.5.5 0 01.5-.5z" clipRule="evenodd" />
+          </svg>
+        </div>
+
+        {/* Content */}
+        <blockquote className="flex-1 mb-6">
+          <p className="text-gray-700 leading-relaxed italic">
+            "{testimonial.content}"
+          </p>
+        </blockquote>
+
+        {/* Rating */}
+        <div className="flex items-center gap-1 mb-4">
+          {Array.from({ length: 5 }, (_, i) => (
+            <svg
+              key={i}
+              className={`w-4 h-4 ${i < testimonial.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          ))}
+        </div>
+
+        {/* Author Info */}
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-[#FF561D] to-[#0ea5e9] rounded-full flex items-center justify-center text-white font-bold">
+            {testimonial.avatar}
+          </div>
+          <div>
+            <div className="font-semibold text-gray-900">{testimonial.name}</div>
+            <div className="text-sm text-gray-600">{testimonial.role}</div>
+            <div className="text-xs text-gray-500">{testimonial.location}</div>
+          </div>
+        </div>
+      </div>
+    </GlassCard>
+  );
+};
+
+export default TestimonialsSection;

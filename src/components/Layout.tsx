@@ -8,7 +8,7 @@ const Layout: React.FC = () => {
   logger.debug('Layout component rendered')
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#fafbff] to-white">
+    <div className="min-h-screen flex flex-col bg-hero">
       <Header />
       
       {/* Main content with padding for fixed header */}

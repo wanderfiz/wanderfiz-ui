@@ -3,10 +3,12 @@ import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import HomePage from './pages/HomePage'
 import LoadingSpinner from './components/ui/LoadingSpinner'
+import ProtectedRoute from './components/auth/ProtectedRoute'
+import ScrollToTop from './components/ui/ScrollToTop'
 import { logger } from './utils/logger'
 
 // Lazy load pages for better performance
-const FeaturesPage = lazy(() => import('./pages/FeaturesPageEnhanced'))
+const FeaturesPage = lazy(() => import('./pages/FeaturesPage'))
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'))
 const PricingPage = lazy(() => import('./pages/PricingPage'))
 const AboutPage = lazy(() => import('./pages/AboutPage'))
@@ -16,6 +18,9 @@ const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'))
 const HelpCenterPage = lazy(() => import('./pages/HelpCenterPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const SignUpPage = lazy(() => import('./pages/SignUpPage'))
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 
 // Loading component
@@ -30,9 +35,24 @@ function App() {
 
   return (
     <Suspense fallback={<PageLoader />}>
+      <ScrollToTop />
       <Routes>
-        {/* Dashboard route without Layout */}
-        <Route path="/dashboard" element={<DashboardPage />} />
+        {/* Protected Dashboard route without Layout */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Authentication routes without Layout */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         
         {/* All other routes with Layout */}
         <Route element={<Layout />}>
@@ -45,8 +65,6 @@ function App() {
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
           <Route path="/help-center" element={<HelpCenterPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
         </Route>
       </Routes>
     </Suspense>

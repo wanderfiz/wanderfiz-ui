@@ -1,134 +1,133 @@
-import React, { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import Card from '../components/ui/Card'
-import Button from '../components/ui/Button'
-import LoadingSpinner from '../components/ui/LoadingSpinner'
-import { useScrollAnimation } from '../hooks/useScrollAnimation'
-
-interface FormErrors {
-  email?: string
-  password?: string
-  general?: string
-}
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import GlassCard from '../components/ui/GlassCard';
+import GlassButton from '../components/ui/GlassButton';
+import Logo from '../components/ui/Logo';
+import { useAuth } from '../hooks/useAuth';
 
 const LoginPage: React.FC = () => {
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false
-  })
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [isLoading, setIsLoading] = useState(false)
-  const { ref, isVisible } = useScrollAnimation({ threshold: 0.3 })
-
-  // Get redirect path from location state (if coming from protected route)
-  const from = location.state?.from?.pathname || '/dashboard'
-
-  const validateForm = (): FormErrors => {
-    const newErrors: FormErrors = {}
-
-    if (!formData.email) {
-      newErrors.email = 'Email is required'
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address'
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required'
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters'
-    }
-
-    return newErrors
-  }
+  });
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : value
-    })
+    });
 
     // Clear error for this field when user starts typing
-    if (errors[name as keyof FormErrors]) {
+    if (errors[name as keyof typeof errors]) {
       setErrors({
         ...errors,
         [name]: undefined
-      })
+      });
     }
-  }
+  };
+
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    return newErrors;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const newErrors = validateForm()
+    e.preventDefault();
+    const newErrors = validateForm();
     
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      return
+      setErrors(newErrors);
+      return;
     }
 
-    setIsLoading(true)
-    setErrors({})
+    setIsLoading(true);
+    setErrors({});
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      await signIn(formData.email, formData.password);
+      navigate('/dashboard');
+    } catch (error: unknown) {
+      console.error('Login error:', error);
       
-      // Placeholder: In real app, make API call to authenticate
-      // For demo, we&apos;ll simulate successful login
-      if (formData.email === 'demo@wanderfiz.com' && formData.password === 'password123') {
-        navigate(from, { replace: true })
-      } else {
-        setErrors({ general: 'Invalid email or password. Try demo@wanderfiz.com with password123' })
+      let errorMessage = 'Invalid email or password. Please try again.';
+      
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as { code: string }).code;
+        if (errorCode === 'UserNotConfirmedException') {
+          errorMessage = 'Please verify your email address before signing in.';
+          // Optionally redirect to email verification
+          navigate('/verify-email', { state: { email: formData.email } });
+          return;
+        } else if (errorCode === 'UserNotFoundException') {
+          errorMessage = 'No account found with this email address.';
+        } else if (errorCode === 'NotAuthorizedException') {
+          errorMessage = 'Incorrect email or password.';
+        } else if (errorCode === 'TooManyRequestsException') {
+          errorMessage = 'Too many failed attempts. Please try again later.';
+        }
       }
-    } catch (_error) {
-      setErrors({ general: 'An error occurred. Please try again.' })
+      
+      setErrors({ general: errorMessage });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-hero-gradient relative overflow-hidden">
+    <div className="min-h-screen bg-hero relative overflow-hidden">
       {/* Background Elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 right-20 w-72 h-72 bg-primary-200/20 rounded-full mix-blend-multiply filter blur-xl animate-blob" />
-        <div className="absolute bottom-20 left-20 w-72 h-72 bg-secondary-200/20 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000" />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent-200/20 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-[#FF561D]/20 to-[#0ea5e9]/20 rounded-full blur-xl animate-float"></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-[#0ea5e9]/20 to-[#a855f7]/20 rounded-full blur-lg animate-float-delay-1"></div>
+        <div className="absolute bottom-32 left-20 w-40 h-40 bg-gradient-to-br from-[#a855f7]/20 to-[#FF561D]/20 rounded-full blur-2xl animate-float-delay-2"></div>
+        <div className="absolute bottom-20 right-10 w-28 h-28 bg-gradient-to-br from-[#84cc16]/20 to-[#fbbf24]/20 rounded-full blur-lg animate-float-slow"></div>
       </div>
 
       <div className="relative flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-        <div ref={ref as React.RefObject<HTMLDivElement>} className={`max-w-md w-full space-y-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <div className="max-w-md w-full space-y-8">
+          {/* Header */}
           <div className="text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            <Link to="/">
+              <Logo size="large" linkToHome={false} />
+            </Link>
+            <h2 className="mt-6 text-3xl md:text-4xl font-bold text-gray-900">
               Welcome back
             </h2>
-            <p className="mt-2 text-gray-600">
-              Sign in to your WanderFiz account and continue your journey
+            <p className="mt-2 text-lg text-gray-600">
+              Sign in to your WanderFiz account
             </p>
           </div>
 
-          <Card variant="glass" className="mt-8" padding="large">
-            {/* Demo Credentials Banner */}
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="text-sm text-blue-800">
-                <div className="font-medium mb-1">Demo Credentials:</div>
-                <div>Email: demo@wanderfiz.com</div>
-                <div>Password: password123</div>
-              </div>
-            </div>
-
+          {/* Login Form */}
+          <GlassCard className="p-8">
             {errors.general && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="mb-6 p-4 bg-red-50/80 backdrop-blur-sm border border-red-200/50 rounded-lg">
                 <div className="text-sm text-red-800">{errors.general}</div>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-900 mb-2">
                   Email address
                 </label>
                 <input
@@ -137,19 +136,19 @@ const LoginPage: React.FC = () => {
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`mt-1 block w-full px-4 py-3 bg-glass-light backdrop-blur-md border rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 ${
-                    errors.email ? 'border-red-300' : 'border-white/20'
+                  className={`w-full px-4 py-3 bg-white/40 backdrop-blur-md border rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#FF561D] focus:border-transparent transition-all duration-200 ${
+                    errors.email ? 'border-red-300' : 'border-white/30'
                   }`}
                   placeholder="Enter your email"
                   disabled={isLoading}
                 />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  <p className="mt-2 text-sm text-red-600">{errors.email}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-900 mb-2">
                   Password
                 </label>
                 <input
@@ -158,14 +157,14 @@ const LoginPage: React.FC = () => {
                   type="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={`mt-1 block w-full px-4 py-3 bg-glass-light backdrop-blur-md border rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 ${
-                    errors.password ? 'border-red-300' : 'border-white/20'
+                  className={`w-full px-4 py-3 bg-white/40 backdrop-blur-md border rounded-lg text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#FF561D] focus:border-transparent transition-all duration-200 ${
+                    errors.password ? 'border-red-300' : 'border-white/30'
                   }`}
                   placeholder="Enter your password"
                   disabled={isLoading}
                 />
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  <p className="mt-2 text-sm text-red-600">{errors.password}</p>
                 )}
               </div>
 
@@ -177,7 +176,7 @@ const LoginPage: React.FC = () => {
                     type="checkbox"
                     checked={formData.rememberMe}
                     onChange={handleInputChange}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-[#FF561D] focus:ring-[#FF561D] border-gray-300 rounded"
                     disabled={isLoading}
                   />
                   <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
@@ -186,96 +185,97 @@ const LoginPage: React.FC = () => {
                 </div>
 
                 <div className="text-sm">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/forgot-password')}
-                    className="font-medium text-primary-600 hover:text-primary-500 transition-colors duration-200"
-                    disabled={isLoading}
+                  <Link
+                    to="/forgot-password"
+                    className="font-medium text-[#FF561D] hover:text-[#e04d1a] transition-colors duration-200"
                   >
-                    Forgot your password?
-                  </button>
+                    Forgot password?
+                  </Link>
                 </div>
               </div>
 
-              <Button 
+              <GlassButton 
                 type="submit" 
-                className="w-full" 
-                size="large"
+                variant="primary" 
+                size="large" 
+                className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <LoadingSpinner size="small" />
-                    <span className="ml-2">Signing in...</span>
-                  </div>
-                ) : (
-                  'Sign in'
-                )}
-              </Button>
+                {isLoading ? 'Signing in...' : 'Sign in'}
+              </GlassButton>
             </form>
 
-            <div className="mt-6">
+            {/* Divider */}
+            <div className="mt-8">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/20" />
+                  <div className="w-full border-t border-white/30" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-glass-light text-gray-500">Or continue with</span>
+                  <span className="px-4 bg-white/50 backdrop-blur-sm text-gray-600 rounded-full">
+                    Or continue with
+                  </span>
                 </div>
               </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <Button
-                  variant="ghost"
-                  onClick={() => {/* Google OAuth */}}
-                  disabled={isLoading}
-                  className="w-full bg-glass-light backdrop-blur-md border border-white/20"
-                >
-                  <span className="mr-2">🔍</span>
-                  Google
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => {/* Apple OAuth */}}
-                  disabled={isLoading}
-                  className="w-full bg-glass-light backdrop-blur-md border border-white/20"
-                >
-                  <span className="mr-2">🍎</span>
-                  Apple
-                </Button>
-              </div>
             </div>
 
-            <div className="mt-6 text-center">
+            {/* Social Login */}
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <GlassButton
+                variant="secondary"
+                className="w-full"
+                disabled={isLoading}
+              >
+                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Google
+              </GlassButton>
+              <GlassButton
+                variant="secondary"
+                className="w-full"
+                disabled={isLoading}
+              >
+                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                Apple
+              </GlassButton>
+            </div>
+
+            {/* Sign Up Link */}
+            <div className="mt-8 text-center">
               <p className="text-sm text-gray-600">
-                Don&apos;t have an account?{' '}
-                <button
-                  onClick={() => navigate('/signup')}
-                  className="font-medium text-primary-600 hover:text-primary-500 transition-colors duration-200"
-                  disabled={isLoading}
+                Don't have an account?{' '}
+                <Link
+                  to="/signup"
+                  className="font-semibold text-[#FF561D] hover:text-[#e04d1a] transition-colors duration-200"
                 >
                   Sign up for free
-                </button>
+                </Link>
               </p>
             </div>
-          </Card>
+          </GlassCard>
 
           {/* Additional Help */}
           <div className="text-center">
             <p className="text-sm text-gray-500">
               Need help?{' '}
-              <button
-                onClick={() => navigate('/help-center')}
-                className="text-primary-600 hover:text-primary-500 transition-colors duration-200"
+              <Link
+                to="/help-center"
+                className="text-[#FF561D] hover:text-[#e04d1a] transition-colors duration-200"
               >
                 Visit our Help Center
-              </button>
+              </Link>
             </p>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default LoginPage
