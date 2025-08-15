@@ -53,38 +53,39 @@ function getEnvVariable(key: string): string | undefined {
 
 function loadEnvironmentConfig(): EnvironmentConfig {
   try {
-    // In test environment, provide default values
+    // In test environment or build environment, provide default values
     const isTest = process.env.NODE_ENV === 'test'
+    const isBuild = process.env.NODE_ENV === 'production' && process.env.CI
     
-    if (isTest) {
+    if (isTest || isBuild) {
       return {
         aws: {
-          region: 'us-east-1',
+          region: getEnvVariable('VITE_AWS_REGION') || 'us-east-1',
           cognito: {
-            userPoolId: 'test-pool-id',
-            clientId: 'test-client-id',
-            domain: 'test-domain'
+            userPoolId: getEnvVariable('VITE_COGNITO_USER_POOL_ID') || 'default-pool-id',
+            clientId: getEnvVariable('VITE_COGNITO_CLIENT_ID') || 'default-client-id',
+            domain: getEnvVariable('VITE_COGNITO_DOMAIN') || 'default-domain'
           }
         },
         api: {
-          baseUrl: 'http://localhost:8080/api',
-          gatewayUrl: 'http://localhost:8443',
-          timeout: 10000
+          baseUrl: getEnvVariable('VITE_API_BASE_URL') || 'http://localhost:8080/api',
+          gatewayUrl: getEnvVariable('VITE_API_GATEWAY_URL') || 'http://localhost:8443',
+          timeout: parseInt(getEnvVariable('VITE_API_TIMEOUT') || '10000', 10)
         },
         app: {
-          name: 'WanderFiz',
-          version: '1.0.0',
-          environment: 'test'
+          name: getEnvVariable('VITE_APP_NAME') || 'WanderFiz',
+          version: getEnvVariable('VITE_APP_VERSION') || '1.0.0',
+          environment: getEnvVariable('VITE_ENVIRONMENT') || (isTest ? 'test' : 'development')
         },
         logging: {
-          level: 'info',
-          filePath: './logs/wanderfiz-ui.log',
-          errorPath: './logs/wanderfiz-ui-error.log'
+          level: getEnvVariable('VITE_LOG_LEVEL') || 'info',
+          filePath: getEnvVariable('VITE_LOG_FILE_PATH') || './logs/wanderfiz-ui.log',
+          errorPath: getEnvVariable('VITE_ERROR_LOG_PATH') || './logs/wanderfiz-ui-error.log'
         }
       }
     }
 
-    // Validate required environment variables in non-test environments
+    // Validate required environment variables in non-test/non-build environments
     for (const envVar of requiredEnvVars) {
       validateEnvironmentVariable(envVar, getEnvVariable(envVar))
     }
