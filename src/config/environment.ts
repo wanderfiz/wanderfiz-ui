@@ -47,11 +47,18 @@ function validateEnvironmentVariable(key: string, value: string | undefined): st
 }
 
 function getEnvVariable(key: string): string | undefined {
-  // Use import.meta.env in production, process.env in tests
-  if (typeof window !== 'undefined' && typeof import.meta?.env !== 'undefined') {
-    return import.meta.env[key]
+  // Use process.env in test environment, import.meta.env in browser
+  if (process.env.NODE_ENV === 'test') {
+    return process.env[key]
   }
-  return process.env[key]
+  
+  // In browser environment, use import.meta.env
+  try {
+    return (import.meta as any)?.env?.[key]
+  } catch {
+    // Fallback to process.env if import.meta is not available
+    return process.env[key]
+  }
 }
 
 function loadEnvironmentConfig(): EnvironmentConfig {

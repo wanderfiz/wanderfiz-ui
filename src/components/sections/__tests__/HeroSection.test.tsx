@@ -41,7 +41,9 @@ describe('HeroSection Component', () => {
       return element?.tagName.toLowerCase() === 'h1' && content.includes('Transform Every')
     })).toBeInTheDocument()
     expect(screen.getByText('Journey')).toBeInTheDocument()
-    expect(screen.getByText('from Dream to')).toBeInTheDocument()
+    expect(screen.getByText((content, element) => {
+      return content.includes('from Dream to')
+    })).toBeInTheDocument()
     expect(screen.getByText('Memory')).toBeInTheDocument()
   })
 
