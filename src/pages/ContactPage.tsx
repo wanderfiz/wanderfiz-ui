@@ -122,7 +122,7 @@ Sent from WanderFiz Contact Form
     try {
       await submitToEmailService(formData);
       setIsSubmitted(true);
-    } catch (error) {
+    } catch (_error) {
       setErrors({ 
         general: 'Failed to send message. Please try again or contact us directly at support@wanderfiz.com' 
       });

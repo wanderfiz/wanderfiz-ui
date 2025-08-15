@@ -65,22 +65,25 @@ const LoginPage: React.FC = () => {
     try {
       await signIn(formData.email, formData.password);
       navigate('/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
       
       let errorMessage = 'Invalid email or password. Please try again.';
       
-      if (error.code === 'UserNotConfirmedException') {
-        errorMessage = 'Please verify your email address before signing in.';
-        // Optionally redirect to email verification
-        navigate('/verify-email', { state: { email: formData.email } });
-        return;
-      } else if (error.code === 'UserNotFoundException') {
-        errorMessage = 'No account found with this email address.';
-      } else if (error.code === 'NotAuthorizedException') {
-        errorMessage = 'Incorrect email or password.';
-      } else if (error.code === 'TooManyRequestsException') {
-        errorMessage = 'Too many failed attempts. Please try again later.';
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as { code: string }).code;
+        if (errorCode === 'UserNotConfirmedException') {
+          errorMessage = 'Please verify your email address before signing in.';
+          // Optionally redirect to email verification
+          navigate('/verify-email', { state: { email: formData.email } });
+          return;
+        } else if (errorCode === 'UserNotFoundException') {
+          errorMessage = 'No account found with this email address.';
+        } else if (errorCode === 'NotAuthorizedException') {
+          errorMessage = 'Incorrect email or password.';
+        } else if (errorCode === 'TooManyRequestsException') {
+          errorMessage = 'Too many failed attempts. Please try again later.';
+        }
       }
       
       setErrors({ general: errorMessage });

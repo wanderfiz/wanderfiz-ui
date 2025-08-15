@@ -1,14 +1,7 @@
 import { renderHook, act } from '@testing-library/react'
 import { useResponsive, useMediaQuery, useBreakpointValue, useOrientation, useTouch } from '../useResponsive'
 
-// Mock window object
-const mockWindow = {
-  innerWidth: 1024,
-  innerHeight: 768,
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  matchMedia: jest.fn()
-}
+// Mock window object for tests
 
 Object.defineProperty(window, 'innerWidth', {
   writable: true,
@@ -343,7 +336,7 @@ describe('useResponsive Hook', () => {
     })
 
     it('returns true for touch devices with maxTouchPoints', () => {
-      delete (window as any).ontouchstart
+      delete (window as Record<string, unknown>).ontouchstart
       Object.defineProperty(navigator, 'maxTouchPoints', {
         value: 1,
         configurable: true
@@ -355,7 +348,7 @@ describe('useResponsive Hook', () => {
     })
 
     it('returns false for non-touch devices', () => {
-      delete (window as any).ontouchstart
+      delete (window as Record<string, unknown>).ontouchstart
       Object.defineProperty(navigator, 'maxTouchPoints', {
         value: 0,
         configurable: true

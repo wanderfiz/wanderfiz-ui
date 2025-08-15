@@ -35,7 +35,7 @@ const ForgotPasswordPage: React.FC = () => {
       // Simulate API call - in real app, this would call your auth service
       await new Promise(resolve => setTimeout(resolve, 1500));
       setIsEmailSent(true);
-    } catch (error) {
+    } catch (_error) {
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -48,7 +48,7 @@ const ForgotPasswordPage: React.FC = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       // Show success message or update UI
-    } catch (error) {
+    } catch (_error) {
       setError('Failed to resend email. Please try again.');
     } finally {
       setIsLoading(false);

@@ -6,7 +6,7 @@ import FeaturesOverview from '../FeaturesOverview'
 // Mock the FeatureCard component
 jest.mock('../../features/FeatureCard', () => ({
   __esModule: true,
-  default: ({ feature }: { feature: any }) => (
+  default: ({ feature }: { feature: { icon: string; name: string; description: string } }) => (
     <div data-testid="feature-card">
       <div data-testid="feature-icon">{feature.icon}</div>
       <h3>{feature.name}</h3>

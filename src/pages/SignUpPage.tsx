@@ -86,7 +86,7 @@ const SignUpPage: React.FC = () => {
       // Simulate sign up - in real app, this would call your auth service
       await new Promise(resolve => setTimeout(resolve, 1500));
       navigate('/dashboard');
-    } catch (error) {
+    } catch (_error) {
       setErrors({ 
         general: 'An error occurred during sign up. Please try again.' 
       });
