@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import GlassCard from '../components/ui/GlassCard';
 import GlassButton from '../components/ui/GlassButton';
 import Logo from '../components/ui/Logo';
+import { useAuth } from '../hooks/useAuth';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -61,13 +63,27 @@ const LoginPage: React.FC = () => {
     setErrors({});
 
     try {
-      // Simulate login - in real app, this would call your auth service
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await signIn(formData.email, formData.password);
       navigate('/dashboard');
-    } catch (error) {
-      setErrors({ 
-        general: 'Invalid email or password. Please try again.' 
-      });
+    } catch (error: any) {
+      console.error('Login error:', error);
+      
+      let errorMessage = 'Invalid email or password. Please try again.';
+      
+      if (error.code === 'UserNotConfirmedException') {
+        errorMessage = 'Please verify your email address before signing in.';
+        // Optionally redirect to email verification
+        navigate('/verify-email', { state: { email: formData.email } });
+        return;
+      } else if (error.code === 'UserNotFoundException') {
+        errorMessage = 'No account found with this email address.';
+      } else if (error.code === 'NotAuthorizedException') {
+        errorMessage = 'Incorrect email or password.';
+      } else if (error.code === 'TooManyRequestsException') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
+      }
+      
+      setErrors({ general: errorMessage });
     } finally {
       setIsLoading(false);
     }
