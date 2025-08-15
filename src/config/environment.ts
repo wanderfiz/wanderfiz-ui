@@ -46,36 +46,75 @@ function validateEnvironmentVariable(key: string, value: string | undefined): st
   return value.trim()
 }
 
+function getEnvVariable(key: string): string | undefined {
+  // Use import.meta.env in production, process.env in tests
+  if (typeof import?.meta?.env !== 'undefined') {
+    return import.meta.env[key]
+  }
+  return process.env[key]
+}
+
 function loadEnvironmentConfig(): EnvironmentConfig {
   try {
-    // Validate required environment variables
+    // In test environment, provide default values
+    const isTest = process.env.NODE_ENV === 'test'
+    
+    if (isTest) {
+      return {
+        aws: {
+          region: 'us-east-1',
+          cognito: {
+            userPoolId: 'test-pool-id',
+            clientId: 'test-client-id',
+            domain: 'test-domain'
+          }
+        },
+        api: {
+          baseUrl: 'http://localhost:8080/api',
+          gatewayUrl: 'http://localhost:8443',
+          timeout: 10000
+        },
+        app: {
+          name: 'WanderFiz',
+          version: '1.0.0',
+          environment: 'test'
+        },
+        logging: {
+          level: 'info',
+          filePath: './logs/wanderfiz-ui.log',
+          errorPath: './logs/wanderfiz-ui-error.log'
+        }
+      }
+    }
+
+    // Validate required environment variables in non-test environments
     for (const envVar of requiredEnvVars) {
-      validateEnvironmentVariable(envVar, import.meta.env[envVar])
+      validateEnvironmentVariable(envVar, getEnvVariable(envVar))
     }
 
     return {
       aws: {
-        region: validateEnvironmentVariable('VITE_AWS_REGION', import.meta.env.VITE_AWS_REGION),
+        region: validateEnvironmentVariable('VITE_AWS_REGION', getEnvVariable('VITE_AWS_REGION')),
         cognito: {
-          userPoolId: validateEnvironmentVariable('VITE_COGNITO_USER_POOL_ID', import.meta.env.VITE_COGNITO_USER_POOL_ID),
-          clientId: validateEnvironmentVariable('VITE_COGNITO_CLIENT_ID', import.meta.env.VITE_COGNITO_CLIENT_ID),
-          domain: validateEnvironmentVariable('VITE_COGNITO_DOMAIN', import.meta.env.VITE_COGNITO_DOMAIN)
+          userPoolId: validateEnvironmentVariable('VITE_COGNITO_USER_POOL_ID', getEnvVariable('VITE_COGNITO_USER_POOL_ID')),
+          clientId: validateEnvironmentVariable('VITE_COGNITO_CLIENT_ID', getEnvVariable('VITE_COGNITO_CLIENT_ID')),
+          domain: validateEnvironmentVariable('VITE_COGNITO_DOMAIN', getEnvVariable('VITE_COGNITO_DOMAIN'))
         }
       },
       api: {
-        baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
-        gatewayUrl: validateEnvironmentVariable('VITE_API_GATEWAY_URL', import.meta.env.VITE_API_GATEWAY_URL),
-        timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '10000', 10)
+        baseUrl: getEnvVariable('VITE_API_BASE_URL') || 'http://localhost:8080/api',
+        gatewayUrl: validateEnvironmentVariable('VITE_API_GATEWAY_URL', getEnvVariable('VITE_API_GATEWAY_URL')),
+        timeout: parseInt(getEnvVariable('VITE_API_TIMEOUT') || '10000', 10)
       },
       app: {
-        name: import.meta.env.VITE_APP_NAME || 'WanderFiz',
-        version: import.meta.env.VITE_APP_VERSION || '1.0.0',
-        environment: import.meta.env.VITE_ENVIRONMENT || 'development'
+        name: getEnvVariable('VITE_APP_NAME') || 'WanderFiz',
+        version: getEnvVariable('VITE_APP_VERSION') || '1.0.0',
+        environment: getEnvVariable('VITE_ENVIRONMENT') || 'development'
       },
       logging: {
-        level: import.meta.env.VITE_LOG_LEVEL || 'info',
-        filePath: import.meta.env.VITE_LOG_FILE_PATH || './logs/wanderfiz-ui.log',
-        errorPath: import.meta.env.VITE_ERROR_LOG_PATH || './logs/wanderfiz-ui-error.log'
+        level: getEnvVariable('VITE_LOG_LEVEL') || 'info',
+        filePath: getEnvVariable('VITE_LOG_FILE_PATH') || './logs/wanderfiz-ui.log',
+        errorPath: getEnvVariable('VITE_ERROR_LOG_PATH') || './logs/wanderfiz-ui-error.log'
       }
     }
   } catch (error) {

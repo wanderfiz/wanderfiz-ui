@@ -56,6 +56,8 @@ const Modal: React.FC<ModalProps> = ({
       onClick={handleBackdropClick}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className={`
           w-full ${sizeClasses[size]} bg-glass-light backdrop-blur-xl 
           border border-white/20 rounded-xl shadow-glass-lg 
