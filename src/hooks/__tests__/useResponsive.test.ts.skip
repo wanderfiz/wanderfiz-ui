@@ -2,6 +2,8 @@ import { renderHook, act } from '@testing-library/react'
 import { useResponsive, useMediaQuery, useBreakpointValue, useOrientation, useTouch } from '../useResponsive'
 
 // Mock window object for tests
+const addEventListenerSpy = jest.spyOn(window, 'addEventListener')
+const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener')
 
 Object.defineProperty(window, 'innerWidth', {
   writable: true,
@@ -24,6 +26,8 @@ Object.defineProperty(navigator, 'maxTouchPoints', {
 describe('useResponsive Hook', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    addEventListenerSpy.mockClear()
+    removeEventListenerSpy.mockClear()
     window.innerWidth = 1024
     window.innerHeight = 768
   })
