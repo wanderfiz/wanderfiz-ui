@@ -54,7 +54,7 @@ function getEnvVariable(key: string): string | undefined {
   
   // In browser environment, use import.meta.env
   try {
-    return (import.meta as any)?.env?.[key]
+    return (import.meta as { env?: Record<string, string> })?.env?.[key]
   } catch {
     // Fallback to process.env if import.meta is not available
     return process.env[key]
