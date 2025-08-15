@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react'
+import { renderHook } from '@testing-library/react'
 import { useResponsive, useMediaQuery, useBreakpointValue, useOrientation, useTouch } from '../useResponsive'
 
 // Mock window object for tests
@@ -129,7 +129,7 @@ describe('useResponsive Hook', () => {
   describe('useTouch', () => {
     it('returns false for non-touch devices', () => {
       Object.defineProperty(navigator, 'maxTouchPoints', { writable: true, value: 0 })
-      delete (window as any).ontouchstart
+      delete (window as Record<string, unknown>).ontouchstart
 
       const { result } = renderHook(() => useTouch())
       expect(result.current).toBe(false)

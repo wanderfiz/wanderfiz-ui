@@ -48,7 +48,7 @@ function validateEnvironmentVariable(key: string, value: string | undefined): st
 
 function getEnvVariable(key: string): string | undefined {
   // Use import.meta.env in production, process.env in tests
-  if (typeof import?.meta?.env !== 'undefined') {
+  if (typeof window !== 'undefined' && typeof import.meta?.env !== 'undefined') {
     return import.meta.env[key]
   }
   return process.env[key]
