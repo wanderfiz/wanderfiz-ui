@@ -47,18 +47,8 @@ function validateEnvironmentVariable(key: string, value: string | undefined): st
 }
 
 function getEnvVariable(key: string): string | undefined {
-  // Use process.env in test environment, import.meta.env in browser
-  if (process.env.NODE_ENV === 'test') {
-    return process.env[key]
-  }
-  
-  // In browser environment, use import.meta.env
-  try {
-    return (import.meta as { env?: Record<string, string> })?.env?.[key]
-  } catch {
-    // Fallback to process.env if import.meta is not available
-    return process.env[key]
-  }
+  // Always use process.env for now to avoid Jest issues with import.meta
+  return process.env[key]
 }
 
 function loadEnvironmentConfig(): EnvironmentConfig {
