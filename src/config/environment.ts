@@ -53,11 +53,12 @@ function getEnvVariable(key: string): string | undefined {
 
 function loadEnvironmentConfig(): EnvironmentConfig {
   try {
-    // In test environment or build environment, provide default values
+    // In test, development, or build environment, provide default values
     const isTest = process.env.NODE_ENV === 'test'
+    const isDev = process.env.NODE_ENV === 'development'
     const isBuild = process.env.NODE_ENV === 'production' && process.env.CI
     
-    if (isTest || isBuild) {
+    if (isTest || isDev || isBuild) {
       return {
         aws: {
           region: getEnvVariable('VITE_AWS_REGION') || 'us-east-1',
@@ -75,7 +76,7 @@ function loadEnvironmentConfig(): EnvironmentConfig {
         app: {
           name: getEnvVariable('VITE_APP_NAME') || 'WanderFiz',
           version: getEnvVariable('VITE_APP_VERSION') || '1.0.0',
-          environment: getEnvVariable('VITE_ENVIRONMENT') || (isTest ? 'test' : 'development')
+          environment: getEnvVariable('VITE_ENVIRONMENT') || (isTest ? 'test' : isDev ? 'development' : 'build')
         },
         logging: {
           level: getEnvVariable('VITE_LOG_LEVEL') || 'info',
