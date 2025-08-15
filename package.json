@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "jest --passWithNoTests --testFailureExitCode=0",
+    "test": "jest",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "test:e2e": "playwright test",
