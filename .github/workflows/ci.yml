@@ -109,17 +109,17 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           start: npm run dev
-          wait-on: 'http://localhost:5173'
+          wait-on: 'http://localhost:3000'
           wait-on-timeout: 120
         env:
-          CYPRESS_BASE_URL: http://localhost:5173
+          CYPRESS_BASE_URL: http://localhost:3000
 
       - name: Run Playwright tests
         run: |
           npx playwright install --with-deps
           npm run test:e2e
         env:
-          PLAYWRIGHT_BASE_URL: http://localhost:5173
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
 
   # Basic dependency check - runs on PR and push
   dependency-check:
