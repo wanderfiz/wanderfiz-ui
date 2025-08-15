@@ -1,224 +1,336 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import FeatureCard from '../components/features/FeatureCard'
-import Button from '../components/ui/Button'
-import Card from '../components/ui/Card'
-import { useScrollAnimation, useStaggeredScrollAnimation } from '../hooks/useScrollAnimation'
-import { FEATURES, FEATURE_CATEGORIES } from '../types/features'
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import GlassCard from '../components/ui/GlassCard';
+import GlassButton from '../components/ui/GlassButton';
+
+interface DetailedFeature {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  longDescription: string;
+  keyBenefits: string[];
+  useCases: string[];
+  availability: string[];
+  gradient: string;
+  category: string;
+}
+
+const detailedFeatures: DetailedFeature[] = [
+  {
+    id: 'ai-trip-generator',
+    icon: '🤖',
+    title: 'Intelligent Trip Generator',
+    description: 'Generate complete itineraries using AI based on your preferences',
+    longDescription: 'Our advanced AI understands natural language and creates personalized travel itineraries in minutes. Simply describe your dream trip, and watch as WanderFiz crafts the perfect plan tailored to your interests, budget, and travel style.',
+    keyBenefits: [
+      'Natural language input - just describe your trip',
+      'Personalized recommendations based on your preferences',
+      'Optimized routes and schedules to maximize your time',
+      'Real-time price monitoring and suggestions',
+      'Integration with booking platforms'
+    ],
+    useCases: [
+      'First-time visitors to a destination',
+      'Travelers with specific interests or themes',
+      'Business travelers with tight schedules',
+      'Group trips requiring coordination'
+    ],
+    availability: ['Explorer', 'Pro', 'Enterprise'],
+    gradient: 'from-[#FF561D] to-[#0ea5e9]',
+    category: 'Smart Trip Planning'
+  },
+  {
+    id: 'visual-designer',
+    icon: '🎨',
+    title: 'Visual Itinerary Designer',
+    description: 'Drag-and-drop interface for creating and editing itineraries',
+    longDescription: 'Create beautiful, visual itineraries with our intuitive drag-and-drop interface. See your entire trip timeline at a glance and make adjustments with ease.',
+    keyBenefits: [
+      'Intuitive visual planning interface',
+      'Easy schedule adjustments with drag-and-drop',
+      'Timeline view of all activities',
+      'Collaborative editing for group trips',
+      'Export to multiple formats'
+    ],
+    useCases: [
+      'Visual learners who prefer graphical planning',
+      'Complex multi-day itineraries',
+      'Group trip coordination',
+      'Professional travel planning'
+    ],
+    availability: ['Free', 'Explorer', 'Pro', 'Enterprise'],
+    gradient: 'from-[#0ea5e9] to-[#a855f7]',
+    category: 'Smart Trip Planning'
+  },
+  {
+    id: 'live-navigation',
+    icon: '🧭',
+    title: 'Instant Navigation',
+    description: 'Real-time GPS navigation with offline maps',
+    longDescription: 'Never get lost again with our advanced navigation system. Works completely offline with detailed maps and real-time guidance.',
+    keyBenefits: [
+      'Offline map access for 200+ countries',
+      'Real-time traffic updates and route optimization',
+      'Voice-guided navigation in 50+ languages',
+      'Integration with public transportation',
+      'Landmark-based directions for easier navigation'
+    ],
+    useCases: [
+      'Solo travelers in unfamiliar destinations',
+      'Areas with poor internet connectivity',
+      'Walking tours and city exploration',
+      'Emergency navigation situations'
+    ],
+    availability: ['Explorer', 'Pro', 'Enterprise'],
+    gradient: 'from-[#a855f7] to-[#84cc16]',
+    category: 'Real-Time Assistant'
+  },
+  {
+    id: 'photo-timeline',
+    icon: '📷',
+    title: 'Smart Photo Timeline',
+    description: 'Automatically organize photos by location and time',
+    longDescription: 'Your travel memories, perfectly organized. Our AI automatically sorts and tags your photos, creating beautiful timelines of your adventures.',
+    keyBenefits: [
+      'Automatic photo organization by location and time',
+      'AI-powered tagging and categorization',
+      'Beautiful timeline views of your travels',
+      'Easy sharing with friends and family',
+      'Backup and sync across all devices'
+    ],
+    useCases: [
+      'Photography enthusiasts',
+      'Family vacation documentation',
+      'Social media content creation',
+      'Travel bloggers and influencers'
+    ],
+    availability: ['Free', 'Explorer', 'Pro', 'Enterprise'],
+    gradient: 'from-[#84cc16] to-[#fbbf24]',
+    category: 'Memory Capture'
+  },
+  {
+    id: 'expense-splitting',
+    icon: '💰',
+    title: 'Smart Expense Splitting',
+    description: 'Automatically calculate and split shared expenses',
+    longDescription: 'End the awkwardness of splitting bills. Our intelligent system tracks expenses and calculates fair splits automatically.',
+    keyBenefits: [
+      'Automatic expense categorization',
+      'Fair splitting algorithms for complex scenarios',
+      'Real-time settlement tracking',
+      'Multiple currency support with live rates',
+      'Integration with payment platforms'
+    ],
+    useCases: [
+      'Group trips with friends',
+      'Family vacations with multiple participants',
+      'Business travel expense management',
+      'Shared accommodation costs'
+    ],
+    availability: ['Pro', 'Enterprise'],
+    gradient: 'from-[#fbbf24] to-[#FF561D]',
+    category: 'Group Travel'
+  },
+  {
+    id: 'emergency-sos',
+    icon: '🚨',
+    title: 'Emergency SOS System',
+    description: 'One-tap emergency assistance with location sharing',
+    longDescription: 'Travel with confidence knowing help is just one tap away. Our emergency system connects you with local authorities and shares your location with trusted contacts.',
+    keyBenefits: [
+      'One-tap SOS activation',
+      'Automatic location sharing with emergency contacts',
+      'Direct connection to local emergency services',
+      'Embassy and consulate contact information',
+      'Medical information and allergy alerts'
+    ],
+    useCases: [
+      'Solo travelers in remote areas',
+      'Travelers with medical conditions',
+      'Adventure and outdoor activities',
+      'Business travel safety compliance'
+    ],
+    availability: ['Explorer', 'Pro', 'Enterprise'],
+    gradient: 'from-[#ef4444] to-[#dc2626]',
+    category: 'Safety & Emergency'
+  }
+];
+
+const categories = [
+  'All Features',
+  'Smart Trip Planning',
+  'Real-Time Assistant',
+  'Memory Capture',
+  'Group Travel',
+  'Safety & Emergency'
+];
 
 const FeaturesPage: React.FC = () => {
-  const navigate = useNavigate()
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation({ threshold: 0.3 })
-  
-  // Filter features by selected category
-  const filteredFeatures = selectedCategory 
-    ? FEATURES.filter(feature => feature.category.id === selectedCategory)
-    : FEATURES
+  const [selectedCategory, setSelectedCategory] = useState('All Features');
+  const [expandedFeature, setExpandedFeature] = useState<string | null>(null);
 
-  const { containerRef, isVisible, visibleItems } = useStaggeredScrollAnimation(
-    filteredFeatures.length,
-    { threshold: 0.2, staggerDelay: 150 }
-  )
-
-  const handleCategorySelect = (categoryId: string | null) => {
-    setSelectedCategory(categoryId)
-  }
+  const filteredFeatures = selectedCategory === 'All Features' 
+    ? detailedFeatures 
+    : detailedFeatures.filter(f => f.category === selectedCategory);
 
   return (
-    <div className="min-h-screen py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Page Header */}
-        <div ref={headerRef as React.RefObject<HTMLDivElement>} className={`text-center mb-16 transition-all duration-1000 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Powerful Features for
-            <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
-              {' '}Every Journey
-            </span>
-          </h1>
-          <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-            Discover how WanderFiz transforms your travel experience with AI-powered planning, 
-            real-time assistance, and seamless memory capture. Every feature is designed to make 
-            your journeys more enjoyable and stress-free.
-          </p>
-        </div>
-
-        {/* Category Filter */}
-        <div className={`mb-12 transition-all duration-1000 delay-300 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <Card variant="glass" className="max-w-5xl mx-auto" padding="large">
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">
-              Explore by Category
-            </h2>
-            
-            <div className="flex flex-wrap justify-center gap-3 mb-6">
-              <Button
-                variant={selectedCategory === null ? 'primary' : 'ghost'}
-                size="small"
-                onClick={() => handleCategorySelect(null)}
-                className={`${selectedCategory === null ? '' : 'bg-glass-light backdrop-blur-md border border-white/20'}`}
-              >
-                All Features
-              </Button>
-              {FEATURE_CATEGORIES.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={selectedCategory === category.id ? 'primary' : 'ghost'}
-                  size="small"
-                  onClick={() => handleCategorySelect(category.id)}
-                  className={`${selectedCategory === category.id ? '' : 'bg-glass-light backdrop-blur-md border border-white/20'}`}
-                >
-                  <span className="mr-2">{category.icon}</span>
-                  {category.name}
-                </Button>
-              ))}
-            </div>
-
-            {/* Category Description */}
-            {selectedCategory && (
-              <div className="text-center bg-glass-light backdrop-blur-md border border-white/20 rounded-lg p-4">
-                <p className="text-gray-600">
-                  {FEATURE_CATEGORIES.find(cat => cat.id === selectedCategory)?.description}
-                </p>
-              </div>
-            )}
-          </Card>
-        </div>
-
-        {/* Features Grid */}
-        <div ref={containerRef as React.RefObject<HTMLDivElement>} className="mb-16">
-          <div className={`text-center mb-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <h3 className="text-2xl font-bold text-gray-900">
-              {selectedCategory 
-                ? `${FEATURE_CATEGORIES.find(cat => cat.id === selectedCategory)?.name} Features` 
-                : 'All Features'
-              }
-            </h3>
-            <p className="text-gray-600 mt-2">
-              {filteredFeatures.length} feature{filteredFeatures.length !== 1 ? 's' : ''} available
+    <div className="min-h-screen pt-20 pb-16 bg-hero">
+      {/* Hero Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+              Features That{' '}
+              <span className="bg-gradient-to-r from-[#FF561D] to-[#0ea5e9] bg-clip-text text-transparent">
+                Transform
+              </span>{' '}
+              Travel
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Discover how WanderFiz revolutionizes every aspect of your travel experience, from planning to memories
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredFeatures.map((feature, index) => (
-              <div
-                key={feature.id}
-                className={`transition-all duration-700 ${
-                  visibleItems.has(index) 
-                    ? 'opacity-100 translate-y-0' 
-                    : 'opacity-0 translate-y-8'
+          {/* Category Filter */}
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
+                  selectedCategory === category
+                    ? 'bg-gradient-to-r from-[#FF561D] to-[#0ea5e9] text-white shadow-lg'
+                    : 'bg-white/40 backdrop-blur-md border border-white/30 text-gray-700 hover:bg-white/50 hover:scale-105'
                 }`}
-                style={{ transitionDelay: `${index * 100}ms` }}
               >
-                <FeatureCard feature={feature} variant="detailed" />
-              </div>
+                {category}
+              </button>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* Feature Benefits Overview */}
-        <div className={`mb-16 transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <Card variant="glass" className="max-w-6xl mx-auto" padding="large">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Why WanderFiz Features Make a Difference
-              </h3>
-              <p className="text-gray-600">
-                Each feature is designed with your travel success in mind
-              </p>
-            </div>
+      {/* Features Grid */}
+      <section className="pb-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {filteredFeatures.map((feature) => (
+              <div key={feature.id} className="group">
+                <GlassCard className="p-8 h-full hover:scale-[1.02] transition-all duration-500">
+                  <div className="space-y-6">
+                    {/* Header */}
+                    <div className="flex items-start gap-4">
+                      <div className="relative">
+                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} p-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                          <span className="text-2xl">{feature.icon}</span>
+                        </div>
+                        <div className={`absolute -inset-1 rounded-2xl bg-gradient-to-br ${feature.gradient} opacity-20 blur-md group-hover:opacity-40 transition-opacity duration-300`}></div>
+                      </div>
+                      
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                          {feature.title}
+                        </h3>
+                        <p className="text-gray-600 leading-relaxed">
+                          {feature.description}
+                        </p>
+                        <div className="mt-3">
+                          <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r ${feature.gradient} text-white`}>
+                            {feature.category}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white text-xl mb-4 mx-auto">
-                  ⚡
+                    {/* Description */}
+                    <p className="text-gray-700 leading-relaxed">
+                      {feature.longDescription}
+                    </p>
+
+                    {/* Key Benefits */}
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3">Key Benefits:</h4>
+                      <ul className="space-y-2">
+                        {feature.keyBenefits.slice(0, expandedFeature === feature.id ? undefined : 3).map((benefit, index) => (
+                          <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
+                            <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${feature.gradient} mt-2 flex-shrink-0`}></div>
+                            <span>{benefit}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      
+                      {feature.keyBenefits.length > 3 && (
+                        <button
+                          onClick={() => setExpandedFeature(expandedFeature === feature.id ? null : feature.id)}
+                          className={`mt-2 text-sm font-medium bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent hover:opacity-80 transition-opacity`}
+                        >
+                          {expandedFeature === feature.id ? 'Show less' : `Show ${feature.keyBenefits.length - 3} more benefits`} →
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Use Cases - Only show when expanded */}
+                    {expandedFeature === feature.id && (
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">Perfect for:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {feature.useCases.map((useCase, index) => (
+                            <span key={index} className="px-3 py-1 bg-white/50 backdrop-blur-sm rounded-full text-sm text-gray-700 border border-white/20">
+                              {useCase}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Availability */}
+                    <div className="flex items-center justify-between pt-4 border-t border-white/20">
+                      <div className="text-sm text-gray-600">
+                        Available on: <span className="font-medium text-gray-800">{feature.availability.join(', ')}</span>
+                      </div>
+                      <button className={`text-sm font-medium bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent hover:opacity-80 transition-opacity`}>
+                        Learn more →
+                      </button>
+                    </div>
+                  </div>
+                </GlassCard>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA Section */}
+          <div className="text-center mt-16">
+            <GlassCard className="inline-block p-8">
+              <div className="space-y-6">
+                <h3 className="text-3xl font-bold text-gray-900">
+                  Ready to Experience All Features?
+                </h3>
+                <p className="text-gray-600 max-w-2xl">
+                  Start your free trial today and discover how WanderFiz can transform your travel experience.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link to="/signup">
+                    <GlassButton variant="primary" size="large">
+                      Start Free Trial
+                    </GlassButton>
+                  </Link>
+                  <Link to="/pricing">
+                    <GlassButton variant="secondary" size="large">
+                      View Pricing Plans
+                    </GlassButton>
+                  </Link>
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Faster Planning</h4>
-                <p className="text-sm text-gray-600">
-                  AI-powered tools reduce planning time by up to 90%
+                <p className="text-sm text-gray-500">
+                  No credit card required • Free forever plan available
                 </p>
               </div>
-
-              <div className="text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-secondary-500 to-secondary-600 rounded-full flex items-center justify-center text-white text-xl mb-4 mx-auto">
-                  🎯
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Personalized</h4>
-                <p className="text-sm text-gray-600">
-                  Every recommendation is tailored to your preferences
-                </p>
-              </div>
-
-              <div className="text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-accent-500 to-accent-600 rounded-full flex items-center justify-center text-white text-xl mb-4 mx-auto">
-                  🔄
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Real-Time</h4>
-                <p className="text-sm text-gray-600">
-                  Live updates and assistance throughout your journey
-                </p>
-              </div>
-
-              <div className="text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-full flex items-center justify-center text-white text-xl mb-4 mx-auto">
-                  🌍
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Global</h4>
-                <p className="text-sm text-gray-600">
-                  Works anywhere in the world, even offline
-                </p>
-              </div>
-            </div>
-          </Card>
+            </GlassCard>
+          </div>
         </div>
-
-        {/* CTA Section */}
-        <div className={`text-center transition-all duration-1000 delay-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <Card variant="glass" className="max-w-4xl mx-auto" padding="large">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">
-              Ready to Experience These Features?
-            </h3>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Join thousands of travelers who are already using WanderFiz to create 
-              unforgettable journeys with intelligent planning and real-time assistance.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="large"
-                onClick={() => navigate('/signup')}
-                className="px-8 shadow-glass-lg"
-              >
-                Start Free Trial
-              </Button>
-              <Button
-                variant="ghost"
-                size="large"
-                onClick={() => navigate('/how-it-works')}
-                className="px-8 bg-glass-light backdrop-blur-md border border-white/20"
-              >
-                See How It Works
-              </Button>
-            </div>
-
-            <div className="flex justify-center items-center space-x-6 mt-8 pt-6 border-t border-white/20">
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-900">Free Trial</div>
-                <div className="text-xs text-gray-600">No credit card required</div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-900">24/7 Support</div>
-                <div className="text-xs text-gray-600">Always here to help</div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-semibold text-gray-900">Cancel Anytime</div>
-                <div className="text-xs text-gray-600">No long-term commitment</div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
+      </section>
     </div>
-  )
-}
+  );
+};
 
 export default FeaturesPage

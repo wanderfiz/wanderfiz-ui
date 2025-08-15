@@ -21,6 +21,26 @@ code {
     monospace;
 }
 
+/* Base typography */
+@layer base {
+  body { @apply font-body text-neutral-900; }
+  h1, h2, h3 { @apply font-display; }
+}
+
+/* Soft travel-themed mesh background */
+.bg-hero {
+  background:
+    radial-gradient(60% 60% at 20% 10%, rgba(255, 86, 29, 0.08) 0%, transparent 60%),
+    radial-gradient(50% 50% at 80% 20%, rgba(14, 165, 233, 0.10) 0%, transparent 60%),
+    radial-gradient(40% 40% at 30% 80%, rgba(168, 85, 247, 0.06) 0%, transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+/* Missing utility referenced by buttons */
+.bg-glass-gradient {
+  background: linear-gradient(135deg, rgba(255,255,255,0.45), rgba(255,255,255,0.20));
+}
+
 /* Animation delays */
 .animation-delay-2000 {
   animation-delay: 2s;

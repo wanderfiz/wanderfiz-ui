@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
+import { useAuth } from '../hooks/useAuth'
 
 interface NavItem {
   id: string
@@ -102,15 +103,22 @@ const UPCOMING_TRIPS: UpcomingTrip[] = [
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
+  const { user, signOut } = useAuth()
   const [activeNav, setActiveNav] = useState('dashboard')
 
   const handleNavClick = (navId: string) => {
     setActiveNav(navId)
   }
 
-  const handleLogout = () => {
-    // In a real app, this would clear auth tokens, etc.
-    navigate('/')
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      navigate('/', { replace: true })
+    } catch (error) {
+      console.error('Logout failed:', error)
+      // Still navigate to home even if logout fails
+      navigate('/', { replace: true })
+    }
   }
 
   return (
@@ -134,11 +142,11 @@ const DashboardPage: React.FC = () => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">John Doe</div>
+                  <div className="text-sm font-medium text-gray-900">{user?.name || 'User'}</div>
                   <div className="text-xs text-gray-500">Explorer Plan</div>
                 </div>
                 <div className="w-10 h-10 bg-gradient-to-r from-[#FF561D] to-[#0ea5e9] rounded-full flex items-center justify-center text-white font-bold">
-                  JD
+                  {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
                 </div>
               </div>
               <button
@@ -188,7 +196,7 @@ const DashboardPage: React.FC = () => {
             {/* Welcome Section */}
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Welcome back, John! 👋
+                Welcome back, {user?.name ? user.name.split(' ')[0] : 'Explorer'}! 👋
               </h1>
               <p className="text-gray-600">
                 Ready for your next adventure? Here's what's happening with your travels.
