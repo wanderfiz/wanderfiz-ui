@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import GlassCard from '../components/ui/GlassCard';
 import GlassButton from '../components/ui/GlassButton';
 import Logo from '../components/ui/Logo';
+import { useAuth } from '../hooks/useAuth';
 
 const SignUpPage: React.FC = () => {
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -53,8 +55,8 @@ const SignUpPage: React.FC = () => {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])/.test(formData.password)) {
+      newErrors.password = 'Password must contain uppercase, lowercase, number, and special character';
     }
 
     if (!formData.confirmPassword) {
@@ -83,13 +85,40 @@ const SignUpPage: React.FC = () => {
     setErrors({});
 
     try {
-      // Simulate sign up - in real app, this would call your auth service
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      navigate('/dashboard');
-    } catch (_error) {
-      setErrors({ 
-        general: 'An error occurred during sign up. Please try again.' 
+      // Call Cognito sign up
+      const result = await signUp({
+        email: formData.email.trim(),
+        password: formData.password,
+        givenName: formData.firstName.trim(),
+        familyName: formData.lastName.trim()
       });
+      
+      
+      // Navigate to email verification page
+      navigate('/verify-email', { 
+        state: { 
+          email: formData.email,
+          userSub: result.userSub 
+        } 
+      });
+    } catch (error: unknown) {
+      
+      let errorMessage = 'An error occurred during sign up. Please try again.';
+      
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as { code: string }).code;
+        if (errorCode === 'UsernameExistsException') {
+          errorMessage = 'An account with this email already exists.';
+        } else if (errorCode === 'InvalidPasswordException') {
+          errorMessage = 'Password must be at least 8 characters with uppercase, lowercase, number, and special character (e.g., !@#$%^&*)';
+        } else if (errorCode === 'InvalidParameterException') {
+          errorMessage = 'Invalid input. Please check your information and try again.';
+        } else if (errorCode === 'TooManyRequestsException') {
+          errorMessage = 'Too many attempts. Please try again later.';
+        }
+      }
+      
+      setErrors({ general: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -217,7 +246,7 @@ const SignUpPage: React.FC = () => {
                   <p className="mt-2 text-sm text-red-600">{errors.password}</p>
                 )}
                 <p className="mt-2 text-xs text-gray-500">
-                  Must be at least 8 characters with uppercase, lowercase, and number
+                  Must be at least 8 characters with uppercase, lowercase, number, and special character (!@#$%^&*)
                 </p>
               </div>
 

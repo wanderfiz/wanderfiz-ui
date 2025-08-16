@@ -47,18 +47,22 @@ function validateEnvironmentVariable(key: string, value: string | undefined): st
 }
 
 function getEnvVariable(key: string): string | undefined {
-  // Always use process.env for now to avoid Jest issues with import.meta
+  // Use import.meta.env in browser, process.env in tests
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env[key]
+  }
   return process.env[key]
 }
 
 function loadEnvironmentConfig(): EnvironmentConfig {
   try {
     // In test, development, or build environment, provide default values
-    const isTest = process.env.NODE_ENV === 'test'
-    const isDev = process.env.NODE_ENV === 'development'
-    const isBuild = process.env.NODE_ENV === 'production' && process.env.CI
+    const nodeEnv = getEnvVariable('NODE_ENV')
+    const isTest = nodeEnv === 'test'
+    const isBuild = nodeEnv === 'production' && getEnvVariable('CI')
     
-    if (isTest || isDev || isBuild) {
+    
+    if (isTest || isBuild) {
       return {
         aws: {
           region: getEnvVariable('VITE_AWS_REGION') || 'us-east-1',
@@ -76,7 +80,7 @@ function loadEnvironmentConfig(): EnvironmentConfig {
         app: {
           name: getEnvVariable('VITE_APP_NAME') || 'WanderFiz',
           version: getEnvVariable('VITE_APP_VERSION') || '1.0.0',
-          environment: getEnvVariable('VITE_ENVIRONMENT') || (isTest ? 'test' : isDev ? 'development' : 'build')
+          environment: getEnvVariable('VITE_ENVIRONMENT') || (isTest ? 'test' : 'build')
         },
         logging: {
           level: getEnvVariable('VITE_LOG_LEVEL') || 'info',
@@ -86,23 +90,28 @@ function loadEnvironmentConfig(): EnvironmentConfig {
       }
     }
 
-    // Validate required environment variables in non-test/non-build environments
-    for (const envVar of requiredEnvVars) {
-      validateEnvironmentVariable(envVar, getEnvVariable(envVar))
+    // In development, use fallbacks if environment variables are missing
+    const isDevelopment = nodeEnv === 'development'
+    
+    if (!isDevelopment) {
+      // Only validate required environment variables in non-development environments
+      for (const envVar of requiredEnvVars) {
+        validateEnvironmentVariable(envVar, getEnvVariable(envVar))
+      }
     }
 
     return {
       aws: {
-        region: validateEnvironmentVariable('VITE_AWS_REGION', getEnvVariable('VITE_AWS_REGION')),
+        region: getEnvVariable('VITE_AWS_REGION') || 'us-east-1',
         cognito: {
-          userPoolId: validateEnvironmentVariable('VITE_COGNITO_USER_POOL_ID', getEnvVariable('VITE_COGNITO_USER_POOL_ID')),
-          clientId: validateEnvironmentVariable('VITE_COGNITO_CLIENT_ID', getEnvVariable('VITE_COGNITO_CLIENT_ID')),
-          domain: validateEnvironmentVariable('VITE_COGNITO_DOMAIN', getEnvVariable('VITE_COGNITO_DOMAIN'))
+          userPoolId: getEnvVariable('VITE_COGNITO_USER_POOL_ID') || 'us-east-1_placeholder',
+          clientId: getEnvVariable('VITE_COGNITO_CLIENT_ID') || 'placeholder_client_id',
+          domain: getEnvVariable('VITE_COGNITO_DOMAIN') || 'placeholder-domain'
         }
       },
       api: {
         baseUrl: getEnvVariable('VITE_API_BASE_URL') || 'http://localhost:8080/api',
-        gatewayUrl: validateEnvironmentVariable('VITE_API_GATEWAY_URL', getEnvVariable('VITE_API_GATEWAY_URL')),
+        gatewayUrl: getEnvVariable('VITE_API_GATEWAY_URL') || 'http://localhost:8443',
         timeout: parseInt(getEnvVariable('VITE_API_TIMEOUT') || '10000', 10)
       },
       app: {
@@ -118,7 +127,6 @@ function loadEnvironmentConfig(): EnvironmentConfig {
     }
   } catch (error) {
     if (error instanceof ConfigurationError) {
-      console.error('❌ Configuration validation failed:', error.message)
       throw error
     }
     throw new ConfigurationError(`Failed to load configuration: ${error instanceof Error ? error.message : 'Unknown error'}`)

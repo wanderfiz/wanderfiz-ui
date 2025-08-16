@@ -7,7 +7,6 @@ const Footer: React.FC = () => {
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // Placeholder for newsletter signup
-    console.log('Newsletter signup:', email)
     setEmail('')
   }
 
@@ -203,7 +202,7 @@ const Footer: React.FC = () => {
           <div className="mt-8 pt-8 border-t border-gray-800">
             <div className="text-center">
               <div className="text-sm text-gray-400">
-                © 2024 WanderFiz, Inc. All rights reserved.
+                © {new Date().getFullYear()} WanderFiz, Inc. All rights reserved.
               </div>
             </div>
           </div>

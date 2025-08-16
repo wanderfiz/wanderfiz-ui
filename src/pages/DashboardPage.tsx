@@ -108,14 +108,16 @@ const DashboardPage: React.FC = () => {
 
   const handleNavClick = (navId: string) => {
     setActiveNav(navId)
+    if (navId === 'settings') {
+      navigate('/dashboard/settings')
+    }
   }
 
   const handleLogout = async () => {
     try {
       await signOut()
       navigate('/', { replace: true })
-    } catch (error) {
-      console.error('Logout failed:', error)
+    } catch {
       // Still navigate to home even if logout fails
       navigate('/', { replace: true })
     }

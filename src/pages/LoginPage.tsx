@@ -66,7 +66,6 @@ const LoginPage: React.FC = () => {
       await signIn(formData.email, formData.password);
       navigate('/dashboard');
     } catch (error: unknown) {
-      console.error('Login error:', error);
       
       let errorMessage = 'Invalid email or password. Please try again.';
       
