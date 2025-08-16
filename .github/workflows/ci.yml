@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main, develop ]
   schedule:
-    - cron: '0 6 * * 1'  # Weekly comprehensive security scan on Mondays at 6 AM UTC
+    - cron: '0 20 * * 0'  # Weekly comprehensive security scan on Sundays at 3 PM EST (8 PM UTC)
   workflow_dispatch:
     inputs:
       scan_type:
@@ -105,21 +105,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Start dev server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:3000
+
       - name: Run Cypress E2E tests
-        uses: cypress-io/github-action@v6
-        with:
-          start: npm run dev
-          wait-on: 'http://localhost:3000'
-          wait-on-timeout: 120
+        run: npx cypress run
         env:
           CYPRESS_BASE_URL: http://localhost:3000
 
       - name: Run Playwright tests
         run: |
           npx playwright install --with-deps
-          npm run test:e2e
+          npx playwright test
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:3000
+          CI: true
 
   # Basic dependency check - runs on PR and push
   dependency-check:
