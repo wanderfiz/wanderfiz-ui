@@ -48,7 +48,7 @@ npm install
 # Start development server
 npm run dev
 
-# Open browser to http://localhost:5173
+# Open browser to http://localhost:3000
 ```
 
 ### Available Scripts
@@ -70,7 +70,7 @@ npm run test:e2e     # Run E2E tests
 ```bash
 # Run development environment
 docker build -f Dockerfile -t wanderfiz-ui:dev .
-docker run -p 5173:5173 wanderfiz-ui:dev
+docker run -p 3000:3000 wanderfiz-ui:dev
 
 # Or use docker-compose (from project root)
 docker-compose up wanderfiz-ui
@@ -145,7 +145,7 @@ The repository includes comprehensive CI/CD workflows:
 - Follow component composition patterns
 
 ### Git Workflow
-- Create feature branches from `develop`
+- Create feature branches with `feature/` prefix (e.g., `feature/user-settings`)
 - Submit pull requests for code review
 - Ensure CI passes before merging
 

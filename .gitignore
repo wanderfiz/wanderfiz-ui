@@ -1,3 +1,6 @@
+# Claude Code - DO NOT COMMIT
+CLAUDE.md
+
 # Dependencies
 node_modules/
 npm-debug.log*
@@ -57,6 +60,9 @@ coverage/
 # ESLint cache
 .eslintcache
 
+# TypeScript cache
+*.tsbuildinfo
+
 # Optional REPL history
 .node_repl_history
 
@@ -75,7 +81,6 @@ coverage/
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/
@@ -84,3 +89,35 @@ public
 # Storybook build outputs
 .out
 .storybook-out
+
+# Vite specific
+*.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+
+# Package lock files (keep package-lock.json, ignore others)
+yarn.lock
+pnpm-lock.yaml
+
+# Development artifacts
+*.map
