@@ -45,6 +45,12 @@ class CognitoService {
   private clientId: string
 
   constructor() {
+    console.log('Initializing Cognito Service with config:', {
+      region: config.aws.region,
+      clientId: config.aws.cognito.clientId,
+      userPoolId: config.aws.cognito.userPoolId
+    })
+    
     this.client = new CognitoIdentityProviderClient({
       region: config.aws.region
     })
@@ -243,7 +249,14 @@ class CognitoService {
   }
 
   private handleCognitoError(error: unknown): AuthError {
-    const errorObj = error as { name?: string; code?: string; message?: string }
+    console.error('Cognito Error:', error)
+    const errorObj = error as { name?: string; code?: string; message?: string; $metadata?: unknown }
+    
+    // Log metadata if available (AWS SDK v3)
+    if (errorObj.$metadata) {
+      console.error('Error metadata:', errorObj.$metadata)
+    }
+    
     const cognitoError: AuthError = {
       code: errorObj.name || errorObj.code || 'UnknownError',
       message: errorObj.message || 'An unknown error occurred',

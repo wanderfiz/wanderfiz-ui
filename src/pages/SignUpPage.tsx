@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import GlassCard from '../components/ui/GlassCard';
 import GlassButton from '../components/ui/GlassButton';
 import Logo from '../components/ui/Logo';
+import { useAuth } from '../hooks/useAuth';
 
 const SignUpPage: React.FC = () => {
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -83,13 +85,42 @@ const SignUpPage: React.FC = () => {
     setErrors({});
 
     try {
-      // Simulate sign up - in real app, this would call your auth service
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      navigate('/dashboard');
-    } catch (_error) {
-      setErrors({ 
-        general: 'An error occurred during sign up. Please try again.' 
+      // Call Cognito sign up
+      const result = await signUp({
+        email: formData.email,
+        password: formData.password,
+        givenName: formData.firstName,
+        familyName: formData.lastName
       });
+      
+      console.log('Sign up successful:', result);
+      
+      // Navigate to email verification page
+      navigate('/verify-email', { 
+        state: { 
+          email: formData.email,
+          userSub: result.userSub 
+        } 
+      });
+    } catch (error: unknown) {
+      console.error('Sign up error:', error);
+      
+      let errorMessage = 'An error occurred during sign up. Please try again.';
+      
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as { code: string }).code;
+        if (errorCode === 'UsernameExistsException') {
+          errorMessage = 'An account with this email already exists.';
+        } else if (errorCode === 'InvalidPasswordException') {
+          errorMessage = 'Password does not meet requirements. Must be at least 8 characters with uppercase, lowercase, number, and special character.';
+        } else if (errorCode === 'InvalidParameterException') {
+          errorMessage = 'Invalid input. Please check your information and try again.';
+        } else if (errorCode === 'TooManyRequestsException') {
+          errorMessage = 'Too many attempts. Please try again later.';
+        }
+      }
+      
+      setErrors({ general: errorMessage });
     } finally {
       setIsLoading(false);
     }

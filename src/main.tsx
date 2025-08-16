@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
 import { logger } from './utils/logger.ts'
+import './utils/testCognito' // Load test utilities in development
 
 // Create a client for React Query
 const queryClient = new QueryClient({

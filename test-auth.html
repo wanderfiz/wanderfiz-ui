@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cognito Authentication</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+        #log { background: #f5f5f5; padding: 10px; margin-top: 20px; height: 300px; overflow-y: auto; }
+        .log-entry { margin: 5px 0; padding: 5px; background: white; border-left: 3px solid #007bff; }
+        .log-error { border-left-color: #dc3545; }
+        .log-success { border-left-color: #28a745; }
+    </style>
+</head>
+<body>
+    <h1>Test Cognito Authentication</h1>
+    
+    <div class="section">
+        <h2>Configuration</h2>
+        <div id="config-info"></div>
+    </div>
+
+    <div class="section">
+        <h2>Test Sign Up</h2>
+        <input type="email" id="signup-email" placeholder="Email" value="test@example.com">
+        <input type="password" id="signup-password" placeholder="Password" value="TestPassword123!">
+        <input type="text" id="signup-firstname" placeholder="First Name" value="Test">
+        <input type="text" id="signup-lastname" placeholder="Last Name" value="User">
+        <button onclick="testSignUp()">Test Sign Up</button>
+    </div>
+
+    <div class="section">
+        <h2>Test Login</h2>
+        <input type="email" id="login-email" placeholder="Email">
+        <input type="password" id="login-password" placeholder="Password">
+        <button onclick="testLogin()">Test Login</button>
+    </div>
+
+    <div class="section">
+        <h2>Verify Email</h2>
+        <input type="email" id="verify-email" placeholder="Email">
+        <input type="text" id="verify-code" placeholder="6-digit code">
+        <button onclick="testVerify()">Verify Email</button>
+    </div>
+
+    <div class="section">
+        <h2>Console Log</h2>
+        <button onclick="clearLog()">Clear Log</button>
+        <div id="log"></div>
+    </div>
+
+    <script type="module">
+        // Import Cognito SDK
+        import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, ConfirmSignUpCommand } from 'https://cdn.skypack.dev/@aws-sdk/client-cognito-identity-provider';
+        
+        // Configuration
+        const config = {
+            region: 'us-east-1',
+            userPoolId: 'us-east-1_7WrU7UGkA',
+            clientId: '7igae1fubblqgsdoj041n1kivi'
+        };
+        
+        // Display configuration
+        document.getElementById('config-info').innerHTML = `
+            <p><strong>Region:</strong> ${config.region}</p>
+            <p><strong>User Pool ID:</strong> ${config.userPoolId}</p>
+            <p><strong>Client ID:</strong> ${config.clientId}</p>
+        `;
+        
+        // Initialize Cognito client
+        const client = new CognitoIdentityProviderClient({ region: config.region });
+        
+        // Logging function
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            logDiv.insertBefore(entry, logDiv.firstChild);
+            console.log(message);
+        }
+        
+        // Clear log
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // Test Sign Up
+        window.testSignUp = async function() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const firstName = document.getElementById('signup-firstname').value;
+            const lastName = document.getElementById('signup-lastname').value;
+            
+            log(`Testing sign up for: ${email}`);
+            
+            try {
+                const command = new SignUpCommand({
+                    ClientId: config.clientId,
+                    Username: email,
+                    Password: password,
+                    UserAttributes: [
+                        { Name: 'email', Value: email },
+                        { Name: 'given_name', Value: firstName },
+                        { Name: 'family_name', Value: lastName }
+                    ]
+                });
+                
+                const response = await client.send(command);
+                log(`✅ Sign up successful! UserSub: ${response.UserSub}`, 'success');
+                log(`Check email: ${response.CodeDeliveryDetails?.Destination}`, 'success');
+            } catch (error) {
+                log(`❌ Sign up failed: ${error.message} (${error.name})`, 'error');
+                console.error(error);
+            }
+        }
+        
+        // Test Login
+        window.testLogin = async function() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            log(`Testing login for: ${email}`);
+            
+            try {
+                const command = new InitiateAuthCommand({
+                    ClientId: config.clientId,
+                    AuthFlow: 'USER_PASSWORD_AUTH',
+                    AuthParameters: {
+                        USERNAME: email,
+                        PASSWORD: password
+                    }
+                });
+                
+                const response = await client.send(command);
+                if (response.AuthenticationResult) {
+                    log('✅ Login successful!', 'success');
+                    log(`Access Token: ${response.AuthenticationResult.AccessToken?.substring(0, 50)}...`, 'success');
+                } else if (response.ChallengeName) {
+                    log(`⚠️ Authentication challenge: ${response.ChallengeName}`, 'warning');
+                }
+            } catch (error) {
+                log(`❌ Login failed: ${error.message} (${error.name})`, 'error');
+                console.error(error);
+            }
+        }
+        
+        // Test Email Verification
+        window.testVerify = async function() {
+            const email = document.getElementById('verify-email').value;
+            const code = document.getElementById('verify-code').value;
+            
+            log(`Testing verification for: ${email} with code: ${code}`);
+            
+            try {
+                const command = new ConfirmSignUpCommand({
+                    ClientId: config.clientId,
+                    Username: email,
+                    ConfirmationCode: code
+                });
+                
+                await client.send(command);
+                log('✅ Email verified successfully!', 'success');
+            } catch (error) {
+                log(`❌ Verification failed: ${error.message} (${error.name})`, 'error');
+                console.error(error);
+            }
+        }
+        
+        // Initial log
+        log('Test page loaded. Ready to test Cognito authentication.');
+    </script>
+</body>
+</html>
