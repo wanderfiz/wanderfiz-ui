@@ -1,10 +1,10 @@
-describe('Wanderfiz App', () => {
+describe('WanderFiz App', () => {
   beforeEach(() => {
     cy.visit('/');
   });
 
   it('displays the application', () => {
-    cy.contains('Wanderfiz');
+    cy.contains('WanderFiz');
   });
 
   it('has proper page title', () => {
