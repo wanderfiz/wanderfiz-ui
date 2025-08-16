@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { useAuth } from '../hooks/useAuth'
 import ProfileSettings from '../components/settings/categories/ProfileSettings'
 import TravelPreferencesSettings from '../components/settings/categories/TravelPreferencesSettings'
 import AIAssistantSettings from '../components/settings/categories/AIAssistantSettings'
@@ -28,7 +27,6 @@ const tabs: TabConfig[] = [
 ]
 
 const SettingsPage: React.FC = () => {
-  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<SettingsTab>('account')
 
   const renderTabContent = () => {

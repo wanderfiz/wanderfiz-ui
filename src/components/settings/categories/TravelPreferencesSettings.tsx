@@ -1,5 +1,5 @@
 import React from 'react'
-import SettingItem, { SelectInput, ToggleSwitch, MultiSelect } from '../SettingItem'
+import SettingItem, { SelectInput, MultiSelect } from '../SettingItem'
 
 const TravelPreferencesSettings: React.FC = () => {
   return (

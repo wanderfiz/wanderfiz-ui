@@ -1,5 +1,5 @@
 import React from 'react'
-import SettingItem, { SelectInput, ToggleSwitch } from '../SettingItem'
+import SettingItem, { SelectInput } from '../SettingItem'
 
 const GroupTravelSettings: React.FC = () => {
   return (

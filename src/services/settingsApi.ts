@@ -19,7 +19,7 @@ const API_BASE_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:8
 class SettingsApiService {
   private async makeRequest<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: Partial<Request> = {}
   ): Promise<T> {
     const accessToken = tokenStorage.getAccessToken()
     

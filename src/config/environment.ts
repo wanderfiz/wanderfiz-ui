@@ -49,7 +49,7 @@ function validateEnvironmentVariable(key: string, value: string | undefined): st
 function getEnvVariable(key: string): string | undefined {
   // Use import.meta.env for Vite, fallback to process.env for Jest
   if (typeof window !== 'undefined') {
-    return (import.meta.env as any)[key]
+    return (import.meta.env as Record<string, string | undefined>)[key]
   }
   return process.env[key]
 }

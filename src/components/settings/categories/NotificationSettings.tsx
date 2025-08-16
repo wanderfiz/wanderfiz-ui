@@ -1,5 +1,5 @@
 import React from 'react'
-import SettingItem, { ToggleSwitch, SelectInput } from '../SettingItem'
+import SettingItem, { ToggleSwitch } from '../SettingItem'
 
 const NotificationSettings: React.FC = () => {
   return (
