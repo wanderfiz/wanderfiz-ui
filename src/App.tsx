@@ -22,6 +22,7 @@ const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'))
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 
 // Loading component
 const PageLoader = () => (
@@ -37,12 +38,20 @@ function App() {
     <Suspense fallback={<PageLoader />}>
       <ScrollToTop />
       <Routes>
-        {/* Protected Dashboard route without Layout */}
+        {/* Protected Dashboard routes without Layout */}
         <Route 
           path="/dashboard" 
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/settings" 
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
             </ProtectedRoute>
           } 
         />

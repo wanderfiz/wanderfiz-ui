@@ -108,6 +108,9 @@ const DashboardPage: React.FC = () => {
 
   const handleNavClick = (navId: string) => {
     setActiveNav(navId)
+    if (navId === 'settings') {
+      navigate('/dashboard/settings')
+    }
   }
 
   const handleLogout = async () => {
