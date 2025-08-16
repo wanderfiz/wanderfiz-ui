@@ -22,5 +22,5 @@ export async function testCognitoConnection() {
 
 // Export for use in browser console
 if (typeof window !== 'undefined') {
-  (window as any).testCognitoConnection = testCognitoConnection
+  (window as Window & { testCognitoConnection?: typeof testCognitoConnection }).testCognitoConnection = testCognitoConnection
 }

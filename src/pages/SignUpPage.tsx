@@ -55,8 +55,8 @@ const SignUpPage: React.FC = () => {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])/.test(formData.password)) {
+      newErrors.password = 'Password must contain uppercase, lowercase, number, and special character';
     }
 
     if (!formData.confirmPassword) {
@@ -112,7 +112,7 @@ const SignUpPage: React.FC = () => {
         if (errorCode === 'UsernameExistsException') {
           errorMessage = 'An account with this email already exists.';
         } else if (errorCode === 'InvalidPasswordException') {
-          errorMessage = 'Password does not meet requirements. Must be at least 8 characters with uppercase, lowercase, number, and special character.';
+          errorMessage = 'Password must be at least 8 characters with uppercase, lowercase, number, and special character (e.g., !@#$%^&*)';
         } else if (errorCode === 'InvalidParameterException') {
           errorMessage = 'Invalid input. Please check your information and try again.';
         } else if (errorCode === 'TooManyRequestsException') {
@@ -248,7 +248,7 @@ const SignUpPage: React.FC = () => {
                   <p className="mt-2 text-sm text-red-600">{errors.password}</p>
                 )}
                 <p className="mt-2 text-xs text-gray-500">
-                  Must be at least 8 characters with uppercase, lowercase, and number
+                  Must be at least 8 characters with uppercase, lowercase, number, and special character (!@#$%^&*)
                 </p>
               </div>
 
