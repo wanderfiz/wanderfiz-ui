@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import { useAuth } from '../hooks/useAuth'
-import SettingsModal from '../components/settings/SettingsModal'
+import SettingsPage from './SettingsPage'
 
 interface NavItem {
   id: string
@@ -106,15 +106,9 @@ const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
   const [activeNav, setActiveNav] = useState('dashboard')
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   const handleNavClick = (navId: string) => {
     setActiveNav(navId)
-    
-    // Open settings modal when Settings is clicked
-    if (navId === 'settings') {
-      setIsSettingsOpen(true)
-    }
   }
 
   const handleLogout = async () => {
@@ -199,6 +193,9 @@ const DashboardPage: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
+          {activeNav === 'settings' ? (
+            <SettingsPage />
+          ) : (
           <div className="p-8">
             {/* Welcome Section */}
             <div className="mb-8">
@@ -346,15 +343,9 @@ const DashboardPage: React.FC = () => {
               </div>
             </div>
           </div>
+          )}
         </main>
       </div>
-
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        initialCategory="profile"
-      />
     </div>
   )
 }
