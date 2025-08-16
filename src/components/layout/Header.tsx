@@ -21,8 +21,8 @@ const Header: React.FC = () => {
       setIsLoggingOut(true)
       await signOut()
       navigate('/', { replace: true })
-    } catch (error) {
-      console.error('Sign out failed:', error)
+    } catch {
+      // Ignore sign out errors
     } finally {
       setIsLoggingOut(false)
       setIsMenuOpen(false)

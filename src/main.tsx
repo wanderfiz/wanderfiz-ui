@@ -3,11 +3,9 @@ import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
+// import SimpleApp from './SimpleApp.tsx'
 import './index.css'
 import { logger } from './utils/logger.ts'
-import './utils/testCognito' // Load test utilities in development
-import './utils/directCognitoTest' // Load direct Cognito test
-import './utils/debugConfig' // Load config debugger
 
 // Create a client for React Query
 const queryClient = new QueryClient({

@@ -23,8 +23,8 @@ class TokenStorageService {
       // Refresh token in localStorage for persistence across sessions
       // In production, consider httpOnly cookies for enhanced security
       localStorage.setItem(this.REFRESH_TOKEN_KEY, tokens.refreshToken)
-    } catch (error) {
-      console.error('Failed to store authentication tokens:', error)
+    } catch {
+      // Ignore storage errors
     }
   }
 
@@ -46,8 +46,7 @@ class TokenStorageService {
         expiresIn: Math.max(0, Math.floor((parseInt(expiresAt) - Date.now()) / 1000)),
         expiresAt: parseInt(expiresAt)
       }
-    } catch (error) {
-      console.error('Failed to retrieve authentication tokens:', error)
+    } catch {
       return null
     }
   }
@@ -55,8 +54,7 @@ class TokenStorageService {
   getAccessToken(): string | null {
     try {
       return sessionStorage.getItem(this.ACCESS_TOKEN_KEY)
-    } catch (error) {
-      console.error('Failed to retrieve access token:', error)
+    } catch {
       return null
     }
   }
@@ -64,8 +62,7 @@ class TokenStorageService {
   getRefreshToken(): string | null {
     try {
       return localStorage.getItem(this.REFRESH_TOKEN_KEY)
-    } catch (error) {
-      console.error('Failed to retrieve refresh token:', error)
+    } catch {
       return null
     }
   }
@@ -76,8 +73,8 @@ class TokenStorageService {
       sessionStorage.removeItem(this.ID_TOKEN_KEY)
       sessionStorage.removeItem(this.EXPIRES_AT_KEY)
       localStorage.removeItem(this.REFRESH_TOKEN_KEY)
-    } catch (error) {
-      console.error('Failed to clear authentication tokens:', error)
+    } catch {
+      // Ignore storage errors
     }
   }
 
@@ -88,8 +85,7 @@ class TokenStorageService {
       
       // Add 5 minute buffer for token refresh
       return Date.now() >= (parseInt(expiresAt) - 5 * 60 * 1000)
-    } catch (error) {
-      console.error('Failed to check token expiration:', error)
+    } catch {
       return true
     }
   }

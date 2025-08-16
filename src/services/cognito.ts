@@ -1,15 +1,3 @@
-import {
-  CognitoIdentityProviderClient,
-  SignUpCommand,
-  ConfirmSignUpCommand,
-  InitiateAuthCommand,
-  GlobalSignOutCommand,
-  ResendConfirmationCodeCommand,
-  GetUserCommand,
-  ForgotPasswordCommand,
-  ConfirmForgotPasswordCommand,
-  AuthFlowType
-} from '@aws-sdk/client-cognito-identity-provider'
 import { config } from '../config/environment'
 
 export interface CognitoUser {
@@ -41,20 +29,10 @@ export interface AuthError {
 }
 
 class CognitoService {
-  private client: CognitoIdentityProviderClient
-  private clientId: string
+  private apiBaseUrl: string
 
   constructor() {
-    console.log('Initializing Cognito Service with config:', {
-      region: config.aws.region,
-      clientId: config.aws.cognito.clientId,
-      userPoolId: config.aws.cognito.userPoolId
-    })
-    
-    this.client = new CognitoIdentityProviderClient({
-      region: config.aws.region
-    })
-    this.clientId = config.aws.cognito.clientId
+    this.apiBaseUrl = config.api.gatewayUrl
   }
 
   async signUp(userData: SignUpData): Promise<{ userSub: string; emailDeliveryDetails?: string }> {
@@ -64,259 +42,236 @@ class CognitoService {
         throw new Error('Missing required fields')
       }
       
-      console.log('SignUp attempt with data:', {
-        email: userData.email,
-        givenName: userData.givenName,
-        familyName: userData.familyName,
-        passwordLength: userData.password.length,
-        hasEmail: !!userData.email,
-        hasGivenName: !!userData.givenName,
-        hasFamilyName: !!userData.familyName
-      })
-      
-      const userAttributes = [
-        {
-          Name: 'email',
-          Value: userData.email
+      const response = await fetch(`${this.apiBaseUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          Name: 'given_name',
-          Value: userData.givenName
-        },
-        {
-          Name: 'family_name',
-          Value: userData.familyName
-        }
-      ]
-      
-      console.log('User attributes:', JSON.stringify(userAttributes, null, 2))
-      
-      const command = new SignUpCommand({
-        ClientId: this.clientId,
-        Username: userData.email,
-        Password: userData.password,
-        UserAttributes: userAttributes
+        body: JSON.stringify(userData)
       })
-      
-      console.log('Sending SignUpCommand with ClientId:', this.clientId)
 
-      const response = await this.client.send(command)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Registration failed' }))
+        throw new Error(errorData.message || `HTTP ${response.status}: Registration failed`)
+      }
+
+      const result = await response.json()
       return {
-        userSub: response.UserSub!,
-        emailDeliveryDetails: response.CodeDeliveryDetails?.Destination
+        userSub: result.userSub,
+        emailDeliveryDetails: result.emailDeliveryDetails
       }
     } catch (error) {
-      throw this.handleCognitoError(error)
+      throw this.handleApiError(error)
     }
   }
 
   async confirmSignUp(email: string, confirmationCode: string): Promise<void> {
     try {
-      const command = new ConfirmSignUpCommand({
-        ClientId: this.clientId,
-        Username: email,
-        ConfirmationCode: confirmationCode
+      const response = await fetch(`${this.apiBaseUrl}/api/auth/confirm?email=${encodeURIComponent(email)}&confirmationCode=${encodeURIComponent(confirmationCode)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       })
 
-      await this.client.send(command)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Email confirmation failed' }))
+        throw new Error(errorData.message || `HTTP ${response.status}: Email confirmation failed`)
+      }
     } catch (error) {
-      throw this.handleCognitoError(error)
+      throw this.handleApiError(error)
     }
   }
 
   async signIn(email: string, password: string): Promise<AuthTokens | { challengeName: string; session: string }> {
     try {
-      const command = new InitiateAuthCommand({
-        AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
-        ClientId: this.clientId,
-        AuthParameters: {
-          USERNAME: email,
-          PASSWORD: password
-        }
+      const response = await fetch(`${this.apiBaseUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
       })
 
-      const response = await this.client.send(command)
-
-      if (response.ChallengeName) {
-        return {
-          challengeName: response.ChallengeName,
-          session: response.Session!
-        }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Login failed' }))
+        throw new Error(errorData.message || `HTTP ${response.status}: Login failed`)
       }
 
-      if (response.AuthenticationResult) {
-        return {
-          accessToken: response.AuthenticationResult.AccessToken!,
-          idToken: response.AuthenticationResult.IdToken!,
-          refreshToken: response.AuthenticationResult.RefreshToken!,
-          expiresIn: response.AuthenticationResult.ExpiresIn!
-        }
+      const result = await response.json()
+      return {
+        accessToken: result.accessToken,
+        idToken: result.idToken,
+        refreshToken: result.refreshToken,
+        expiresIn: result.expiresIn
       }
-
-      throw new Error('Authentication failed - no result returned')
     } catch (error) {
-      throw this.handleCognitoError(error)
+      throw this.handleApiError(error)
     }
   }
 
   async getCurrentUser(accessToken: string): Promise<CognitoUser> {
     try {
-      const command = new GetUserCommand({
-        AccessToken: accessToken
-      })
-
-      const response = await this.client.send(command)
+      // For now, decode the user info from the JWT token
+      // In a production app, you might want to call an API endpoint to get user details
+      const payload = JSON.parse(atob(accessToken.split('.')[1]))
       
-      const attributes = response.UserAttributes || []
-      const getAttributeValue = (name: string) => 
-        attributes.find(attr => attr.Name === name)?.Value || ''
-
       return {
-        email: getAttributeValue('email'),
-        givenName: getAttributeValue('given_name'),
-        familyName: getAttributeValue('family_name'),
-        emailVerified: getAttributeValue('email_verified') === 'true',
-        sub: getAttributeValue('sub')
+        email: payload.email || '',
+        givenName: payload.given_name || '',
+        familyName: payload.family_name || '',
+        emailVerified: payload.email_verified === 'true' || payload.email_verified === true,
+        sub: payload.sub || ''
       }
     } catch (error) {
-      throw this.handleCognitoError(error)
+      throw this.handleApiError(error)
     }
   }
 
   async globalSignOut(accessToken: string): Promise<void> {
     try {
-      const command = new GlobalSignOutCommand({
-        AccessToken: accessToken
+      const response = await fetch(`${this.apiBaseUrl}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        }
       })
 
-      await this.client.send(command)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Logout failed' }))
+        throw new Error(errorData.message || `HTTP ${response.status}: Logout failed`)
+      }
     } catch (error) {
-      throw this.handleCognitoError(error)
+      throw this.handleApiError(error)
     }
   }
 
   async resendConfirmationCode(email: string): Promise<{ destination?: string }> {
     try {
-      const command = new ResendConfirmationCodeCommand({
-        ClientId: this.clientId,
-        Username: email
+      const response = await fetch(`${this.apiBaseUrl}/api/auth/resend-confirmation?email=${encodeURIComponent(email)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       })
 
-      const response = await this.client.send(command)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Resend confirmation failed' }))
+        throw new Error(errorData.message || `HTTP ${response.status}: Resend confirmation failed`)
+      }
+
+      const result = await response.json()
       return {
-        destination: response.CodeDeliveryDetails?.Destination
+        destination: result.destination
       }
     } catch (error) {
-      throw this.handleCognitoError(error)
+      throw this.handleApiError(error)
     }
   }
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
     try {
-      const command = new InitiateAuthCommand({
-        AuthFlow: AuthFlowType.REFRESH_TOKEN_AUTH,
-        ClientId: this.clientId,
-        AuthParameters: {
-          REFRESH_TOKEN: refreshToken
+      const response = await fetch(`${this.apiBaseUrl}/api/auth/refresh?refreshToken=${encodeURIComponent(refreshToken)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         }
       })
 
-      const response = await this.client.send(command)
-
-      if (response.AuthenticationResult) {
-        return {
-          accessToken: response.AuthenticationResult.AccessToken!,
-          idToken: response.AuthenticationResult.IdToken!,
-          refreshToken: refreshToken, // Refresh token doesn't change
-          expiresIn: response.AuthenticationResult.ExpiresIn!
-        }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Token refresh failed' }))
+        throw new Error(errorData.message || `HTTP ${response.status}: Token refresh failed`)
       }
 
-      throw new Error('Token refresh failed')
+      const result = await response.json()
+      return {
+        accessToken: result.accessToken,
+        idToken: result.idToken,
+        refreshToken: result.refreshToken,
+        expiresIn: result.expiresIn
+      }
     } catch (error) {
-      throw this.handleCognitoError(error)
+      throw this.handleApiError(error)
     }
   }
 
   async forgotPassword(email: string): Promise<{ destination?: string }> {
     try {
-      const command = new ForgotPasswordCommand({
-        ClientId: this.clientId,
-        Username: email
+      // This would need to be implemented in the API Gateway as well
+      const response = await fetch(`${this.apiBaseUrl}/api/auth/forgot-password?email=${encodeURIComponent(email)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       })
 
-      const response = await this.client.send(command)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Forgot password failed' }))
+        throw new Error(errorData.message || `HTTP ${response.status}: Forgot password failed`)
+      }
+
+      const result = await response.json()
       return {
-        destination: response.CodeDeliveryDetails?.Destination
+        destination: result.destination
       }
     } catch (error) {
-      throw this.handleCognitoError(error)
+      throw this.handleApiError(error)
     }
   }
 
   async confirmForgotPassword(email: string, confirmationCode: string, newPassword: string): Promise<void> {
     try {
-      const command = new ConfirmForgotPasswordCommand({
-        ClientId: this.clientId,
-        Username: email,
-        ConfirmationCode: confirmationCode,
-        Password: newPassword
+      const response = await fetch(`${this.apiBaseUrl}/api/auth/confirm-forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          confirmationCode,
+          newPassword
+        })
       })
 
-      await this.client.send(command)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Password reset confirmation failed' }))
+        throw new Error(errorData.message || `HTTP ${response.status}: Password reset confirmation failed`)
+      }
     } catch (error) {
-      throw this.handleCognitoError(error)
+      throw this.handleApiError(error)
     }
   }
 
-  private handleCognitoError(error: unknown): AuthError {
-    console.error('Cognito Error Full Object:', error)
-    const errorObj = error as { name?: string; code?: string; message?: string; $metadata?: unknown; $fault?: string }
+  private handleApiError(error: unknown): AuthError {
+    const errorObj = error as { message?: string; name?: string; code?: string }
     
-    // Log all error properties
-    console.error('Error properties:', {
-      name: errorObj.name,
-      code: errorObj.code,
-      message: errorObj.message,
-      fault: errorObj.$fault,
-      metadata: errorObj.$metadata
-    })
+    let message = errorObj.message || 'An unknown error occurred'
+    let code = 'UnknownError'
     
-    const cognitoError: AuthError = {
-      code: errorObj.name || errorObj.code || 'UnknownError',
-      message: errorObj.message || 'An unknown error occurred',
-      name: errorObj.name || 'CognitoError'
+    // Try to extract error code from message if it contains known patterns
+    if (message.includes('email already exists')) {
+      code = 'UsernameExistsException'
+    } else if (message.includes('verify your email')) {
+      code = 'UserNotConfirmedException'
+    } else if (message.includes('Invalid email or password')) {
+      code = 'NotAuthorizedException'
+    } else if (message.includes('account found')) {
+      code = 'UserNotFoundException'
+    } else if (message.includes('verification code')) {
+      code = 'CodeMismatchException'
+    } else if (message.includes('expired')) {
+      code = 'ExpiredCodeException'
+    } else if (message.includes('Too many')) {
+      code = 'LimitExceededException'
+    } else if (message.includes('Password')) {
+      code = 'InvalidPasswordException'
     }
 
-    // Map common Cognito errors to user-friendly messages
-    switch (cognitoError.code) {
-      case 'UserNotConfirmedException':
-        cognitoError.message = 'Please verify your email address before signing in.'
-        break
-      case 'NotAuthorizedException':
-        cognitoError.message = 'Invalid email or password.'
-        break
-      case 'UserNotFoundException':
-        cognitoError.message = 'No account found with this email address.'
-        break
-      case 'CodeMismatchException':
-        cognitoError.message = 'Invalid verification code. Please try again.'
-        break
-      case 'ExpiredCodeException':
-        cognitoError.message = 'Verification code has expired. Please request a new one.'
-        break
-      case 'LimitExceededException':
-        cognitoError.message = 'Too many attempts. Please try again later.'
-        break
-      case 'InvalidPasswordException':
-        cognitoError.message = 'Password does not meet requirements.'
-        break
-      case 'UsernameExistsException':
-        cognitoError.message = 'An account with this email already exists.'
-        break
-      default:
-        // Keep the original message for unknown errors
-        break
+    const cognitoError: AuthError = {
+      code: code,
+      message: message,
+      name: errorObj.name || 'ApiError'
     }
 
     return cognitoError

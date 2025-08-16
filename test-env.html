@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Environment Test</title>
+</head>
+<body>
+    <h1>Environment Variables Test</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        console.log('Testing environment variables...');
+        console.log('import.meta.env:', import.meta.env);
+        console.log('VITE_AWS_REGION:', import.meta.env.VITE_AWS_REGION);
+        
+        const output = document.getElementById('output');
+        output.innerHTML = `
+            <p>VITE_AWS_REGION: ${import.meta.env.VITE_AWS_REGION || 'undefined'}</p>
+            <p>NODE_ENV: ${import.meta.env.NODE_ENV || 'undefined'}</p>
+            <p>MODE: ${import.meta.env.MODE || 'undefined'}</p>
+        `;
+    </script>
+</body>
+</html>

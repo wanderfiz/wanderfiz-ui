@@ -48,7 +48,7 @@ npm install
 # Start development server
 npm run dev
 
-# Open browser to http://localhost:5173
+# Open browser to http://localhost:3000
 ```
 
 ### Available Scripts
@@ -70,7 +70,7 @@ npm run test:e2e     # Run E2E tests
 ```bash
 # Run development environment
 docker build -f Dockerfile -t wanderfiz-ui:dev .
-docker run -p 5173:5173 wanderfiz-ui:dev
+docker run -p 3000:3000 wanderfiz-ui:dev
 
 # Or use docker-compose (from project root)
 docker-compose up wanderfiz-ui

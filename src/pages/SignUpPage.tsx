@@ -93,7 +93,6 @@ const SignUpPage: React.FC = () => {
         familyName: formData.lastName.trim()
       });
       
-      console.log('Sign up successful:', result);
       
       // Navigate to email verification page
       navigate('/verify-email', { 
@@ -103,7 +102,6 @@ const SignUpPage: React.FC = () => {
         } 
       });
     } catch (error: unknown) {
-      console.error('Sign up error:', error);
       
       let errorMessage = 'An error occurred during sign up. Please try again.';
       

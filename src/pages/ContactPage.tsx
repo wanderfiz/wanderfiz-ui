@@ -76,27 +76,10 @@ const ContactPage: React.FC = () => {
   const submitToEmailService = async (formData: ContactForm) => {
     // Using EmailJS or similar service to send emails
     // For demo purposes, we'll simulate the API call
-    const emailData = {
-      to_email: 'support@wanderfiz.com',
-      from_name: formData.name,
-      from_email: formData.email,
-      subject: `[${formData.category.toUpperCase()}] ${formData.subject}`,
-      message: `
-Name: ${formData.name}
-Email: ${formData.email}
-Category: ${categories.find(c => c.value === formData.category)?.label}
-Subject: ${formData.subject}
-
-Message:
-${formData.message}
-
----
-Sent from WanderFiz Contact Form
-      `.trim()
-    };
-
-    // Simulate API call - in real app, you would use EmailJS, SendGrid, or your backend API
-    console.log('Sending email:', emailData);
+    
+    // In a real implementation, you would process the formData here
+    // Example: await emailService.send(formData)
+    void formData; // Suppress unused variable warning
     
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 2000));

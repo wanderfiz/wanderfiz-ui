@@ -117,8 +117,7 @@ const DashboardPage: React.FC = () => {
     try {
       await signOut()
       navigate('/', { replace: true })
-    } catch (error) {
-      console.error('Logout failed:', error)
+    } catch {
       // Still navigate to home even if logout fails
       navigate('/', { replace: true })
     }
