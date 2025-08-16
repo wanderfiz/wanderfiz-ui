@@ -59,25 +59,46 @@ class CognitoService {
 
   async signUp(userData: SignUpData): Promise<{ userSub: string; emailDeliveryDetails?: string }> {
     try {
+      // Validate input data
+      if (!userData.email || !userData.password || !userData.givenName || !userData.familyName) {
+        throw new Error('Missing required fields')
+      }
+      
+      console.log('SignUp attempt with data:', {
+        email: userData.email,
+        givenName: userData.givenName,
+        familyName: userData.familyName,
+        passwordLength: userData.password.length,
+        hasEmail: !!userData.email,
+        hasGivenName: !!userData.givenName,
+        hasFamilyName: !!userData.familyName
+      })
+      
+      const userAttributes = [
+        {
+          Name: 'email',
+          Value: userData.email
+        },
+        {
+          Name: 'given_name',
+          Value: userData.givenName
+        },
+        {
+          Name: 'family_name',
+          Value: userData.familyName
+        }
+      ]
+      
+      console.log('User attributes:', JSON.stringify(userAttributes, null, 2))
+      
       const command = new SignUpCommand({
         ClientId: this.clientId,
         Username: userData.email,
         Password: userData.password,
-        UserAttributes: [
-          {
-            Name: 'email',
-            Value: userData.email
-          },
-          {
-            Name: 'given_name',
-            Value: userData.givenName
-          },
-          {
-            Name: 'family_name',
-            Value: userData.familyName
-          }
-        ]
+        UserAttributes: userAttributes
       })
+      
+      console.log('Sending SignUpCommand with ClientId:', this.clientId)
 
       const response = await this.client.send(command)
       return {
@@ -249,13 +270,17 @@ class CognitoService {
   }
 
   private handleCognitoError(error: unknown): AuthError {
-    console.error('Cognito Error:', error)
-    const errorObj = error as { name?: string; code?: string; message?: string; $metadata?: unknown }
+    console.error('Cognito Error Full Object:', error)
+    const errorObj = error as { name?: string; code?: string; message?: string; $metadata?: unknown; $fault?: string }
     
-    // Log metadata if available (AWS SDK v3)
-    if (errorObj.$metadata) {
-      console.error('Error metadata:', errorObj.$metadata)
-    }
+    // Log all error properties
+    console.error('Error properties:', {
+      name: errorObj.name,
+      code: errorObj.code,
+      message: errorObj.message,
+      fault: errorObj.$fault,
+      metadata: errorObj.$metadata
+    })
     
     const cognitoError: AuthError = {
       code: errorObj.name || errorObj.code || 'UnknownError',

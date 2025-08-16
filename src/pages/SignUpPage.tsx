@@ -87,10 +87,10 @@ const SignUpPage: React.FC = () => {
     try {
       // Call Cognito sign up
       const result = await signUp({
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
-        givenName: formData.firstName,
-        familyName: formData.lastName
+        givenName: formData.firstName.trim(),
+        familyName: formData.lastName.trim()
       });
       
       console.log('Sign up successful:', result);

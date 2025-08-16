@@ -6,6 +6,8 @@ import App from './App.tsx'
 import './index.css'
 import { logger } from './utils/logger.ts'
 import './utils/testCognito' // Load test utilities in development
+import './utils/directCognitoTest' // Load direct Cognito test
+import './utils/debugConfig' // Load config debugger
 
 // Create a client for React Query
 const queryClient = new QueryClient({
