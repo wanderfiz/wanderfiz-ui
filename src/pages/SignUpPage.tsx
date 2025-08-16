@@ -3,9 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import GlassCard from '../components/ui/GlassCard';
 import GlassButton from '../components/ui/GlassButton';
 import Logo from '../components/ui/Logo';
+import { useAuth } from '../hooks/useAuth';
+import type { AuthError } from '../services/cognito';
 
 const SignUpPage: React.FC = () => {
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -83,12 +86,23 @@ const SignUpPage: React.FC = () => {
     setErrors({});
 
     try {
-      // Simulate sign up - in real app, this would call your auth service
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      navigate('/dashboard');
-    } catch (_error) {
+      // Call real Cognito signup
+      await signUp({
+        email: formData.email,
+        password: formData.password,
+        givenName: formData.firstName,
+        familyName: formData.lastName
+      });
+      
+      // Navigate to email verification page with email
+      navigate('/verify-email', { 
+        state: { email: formData.email },
+        replace: true 
+      });
+    } catch (error) {
+      const authError = error as AuthError;
       setErrors({ 
-        general: 'An error occurred during sign up. Please try again.' 
+        general: authError.message || 'An error occurred during sign up. Please try again.' 
       });
     } finally {
       setIsLoading(false);

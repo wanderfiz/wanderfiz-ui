@@ -21,7 +21,5 @@ export default defineConfig({
   define: {
     // Only expose specific environment variables to avoid security risks
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-    'process.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL),
-    'process.env.VITE_LOG_LEVEL': JSON.stringify(process.env.VITE_LOG_LEVEL),
   },
 })
